@@ -1,10 +1,10 @@
-import { PanSparkVM } from "./panspark";
+import { CakeSparkVM } from "./cakespark";
 
 // Get the start time
 const startTime = new Date().getTime();
 
 // Create multiple VM instances to demonstrate isolation
-const vm1 = new PanSparkVM();
+const vm1 = new CakeSparkVM();
 
 let code1: string = `
 // ===== BASIC OPERATIONS =====
@@ -65,8 +65,7 @@ PRINT expXResult
 PRINT "=== Memory Operations ==="
 SET 999 >> tempVar
 PRINT tempVar
-FREE tempVar
-PRINT "Variable freed from memory"
+PRINT "Variable stored in memory"
 
 // ===== INCREMENT/DECREMENT OPERATIONS =====
 PRINT "=== Increment/Decrement Operations ==="
@@ -242,7 +241,7 @@ for (let line of vm1.buffer) {
   console.log(line);
 }
 
-const vm2 = new PanSparkVM();
+const vm2 = new CakeSparkVM();
 const restoredInstructions = vm2.loadState(savedState)!;
 const gen2 = vm2.run(restoredInstructions);
 

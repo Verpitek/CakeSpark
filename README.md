@@ -1,5 +1,5 @@
 <img src="http://dev.verpitek.com:3000/_app/immutable/assets/favicon.CBf7ROhx.png" width=256>
-# PanSpark
+# CakeSpark
 
 A tick-based interpreted OpCode scripting language designed for predictable performance and ease of parsing.
 
@@ -12,20 +12,20 @@ A tick-based interpreted OpCode scripting language designed for predictable perf
 - **One Operation Per Line**: Predictable execution model with strict syntax
 - **High Performance**: Pre-compiled instructions and optimized execution
 - **Extensible**: Easy-to-create custom OpCodes via module system
-- **Built-in Types**: Numbers, Strings, Lists, and Structs with comprehensive operations
+- **Built-in Types**: Numbers, Strings, and Lists with comprehensive operations
 - **Procedures**: Isolated memory scopes with parameter passing and return values
-- **Error Handling**: Try-catch blocks for graceful error management
-- **Memory Management**: Manual virtual memory control with `FREE` operation
 - **List Operations**: Create, manipulate, and sort lists of numbers
+- **Type Introspection**: Check variable types at runtime with `TYPEOF`
+- **Debugging**: Memory dumps, statistics, and execution ticks
 
 ## Getting Started
 
 ### Basic Usage
 
 ```typescript
-import { PanSparkVM } from "./panspark";
+import { CakeSparkVM } from "./cakespark";
 
-const vm1 = new PanSparkVM();
+const vm1 = new CakeSparkVM();
 
 let code: string = `
 SET 10 >> num1
@@ -46,9 +46,9 @@ for (let line of vm1.buffer) {
 
 ## Language Overview
 
-PanSpark uses a simple, readable syntax where each line performs exactly one operation:
+CakeSpark uses a simple, readable syntax where each line performs exactly one operation:
 
-```panspark
+```cakespark
 // Variables
 SET 10 >> x
 SET y        // Defaults to 0
@@ -70,7 +70,7 @@ END
 
 ### Working with Lists
 
-```panspark
+```cakespark
 // Create and populate a list
 LIST_CREATE numbers
 LIST_PUSH 30 >> numbers
@@ -85,7 +85,7 @@ PRINT smallest  // outputs: 10
 
 ### Procedures
 
-```panspark
+```cakespark
 PROC factorial (n) {
    IF n <= 1 >> base_case
    MATH n - 1 >> n_minus_1
@@ -117,16 +117,16 @@ PRINT result  // outputs: 120
 
 ## Creating Custom OpCodes
 
-Extend PanSpark with your own operations:
+Extend CakeSpark with your own operations:
 
 ```typescript
 // mymodule.ts
-import { PanSparkVM } from 'panspark';
+import { CakeSparkVM } from 'cakespark';
 
-export function registerWith(vm: PanSparkVM): void {
+export function registerWith(vm: CakeSparkVM): void {
   vm.registerOpCode("DOUBLE", (args, context) => {
     const inputVar = context.getVar(args[0], 0);
-    if (inputVar.type === PanSparkType.Number) {
+    if (inputVar.type === CakeSparkType.Number) {
       const doubled = Num(inputVar.value * 2);
       context.setVar(args[2], doubled);
     }
@@ -134,8 +134,8 @@ export function registerWith(vm: PanSparkVM): void {
 }
 ```
 
-Use in PanSpark:
-```panspark
+Use in CakeSpark:
+```cakespark
 IMPORT "mymodule"
 SET 5 >> x
 DOUBLE x >> result

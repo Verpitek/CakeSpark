@@ -1,61 +1,20 @@
 export type OpCodeHandler = (args: string[], context: InterpreterContext) => void;
 
-// works... just barely
-function generateUUID() {
-  var chars = '0123456789abcdef';
-  var uuid = '';
-  var i = 0;
-  while (i < 36) {
-    if (i === 8 || i === 13 || i === 18 || i === 23) {
-      uuid += '-';
-    } else if (i === 14) {
-      uuid += '4';
-    } else if (i === 19) {
-      var n = Math.floor(Math.random() * 4);
-      uuid += chars[n + 8];
-    } else {
-      var n = Math.floor(Math.random() * 16);
-      uuid += chars[n];
-    }
-    i++;
-  }
-  
-  return uuid;
-}
-
-
 // the types are mostly used for devs :3
-enum PanSparkType {
+enum CakeSparkType {
   Number,
   String,
   List,
-  Struct,
 }
 
-type StructField = {
-  type: 'number' | 'string' | 'list';
-};
-
-type StructDefinition = {
-  name: string;
-  fields: Map<string, StructField>;
-};
-
-type StructInstance = {
-  structName: string;
-  data: Map<string, Variable>;
-};
-
 type Variable =
-  | { type: PanSparkType.Number; value: number }
-  | { type: PanSparkType.String; value: string }
-  | { type: PanSparkType.List; value: number[] }
-  | { type: PanSparkType.Struct; value: StructInstance };
+  | { type: CakeSparkType.Number; value: number }
+  | { type: CakeSparkType.String; value: string }
+  | { type: CakeSparkType.List; value: number[] };
   
-export const Num = (value: number): Variable => ({ type: PanSparkType.Number, value });
-export const Str = (value: string): Variable => ({ type: PanSparkType.String, value });
-export const List = (value: number[]): Variable => ({ type: PanSparkType.List, value });
-export const Struct = (value: StructInstance): Variable => ({ type: PanSparkType.Struct, value });
+export const Num = (value: number): Variable => ({ type: CakeSparkType.Number, value });
+export const Str = (value: string): Variable => ({ type: CakeSparkType.String, value });
+export const List = (value: number[]): Variable => ({ type: CakeSparkType.List, value });
 
 enum OpCode {
   SET,
@@ -71,11 +30,9 @@ enum OpCode {
   WAIT,
   INC,
   DEC,
-  FREE,
-  NOP,
-  MEMDUMP,
-  MEMSTATS,
-  TICK,
+   NOP,
+   MEMDUMP,
+   TICK,
   ENDPROC,
   FOR,
   ENDFOR,
@@ -83,37 +40,18 @@ enum OpCode {
   CONTINUE,
   
    LIST_CREATE,
-   LIST_SET,
-   LIST_GET,
-   LIST_PUSH,
-   LIST_SORT,
-   LIST_LENGTH,
-   LIST_REVERSE,
-   LIST_FIND,
-   LIST_INDEX_OF,
-   LIST_CONTAINS,
-   LIST_REMOVE,
-   
-   CONCAT,
-   STRLEN,
-   SUBSTR,
-   STR_UPPER,
-   STR_LOWER,
-   STR_TRIM,
-   STR_REPLACE,
-   STR_CONTAINS,
-   STR_CHAR,
-   
-    TYPEOF,
-    TRY,
-    CATCH,
-    ENDTRY,
-    THROW,
+    LIST_SET,
+    LIST_GET,
+    LIST_PUSH,
+    LIST_SORT,
+    LIST_LENGTH,
+    LIST_REVERSE,
+    LIST_FIND,
+    LIST_INDEX_OF,
+    LIST_CONTAINS,
+    LIST_REMOVE,
     
-    STRUCT,
-    STRUCTEND,
-    STRUCT_GET,
-    STRUCT_SET,
+     TYPEOF,
 }
 
 // Pre-compiled instruction with resolved indices
@@ -417,43 +355,33 @@ function processEscapeSequences(str: string): string {
     .replace(/\x00/g, '\\'); // Replace placeholder with actual backslash
 }
 
-export class PanSparkVM {
-  // Instance state
-  private jumpPoints: Map<string, number> = new Map();
-  private procPoints: Map<string, [number, number]> = new Map();
-  private variableMemory: Map<string, Variable> = new Map();
-  public uuid: string = generateUUID();
-  public buffer: string[] = [];
+export class CakeSparkVM {
+   // Instance state
+   private jumpPoints: Map<string, number> = new Map();
+   private procPoints: Map<string, [number, number]> = new Map();
+   private variableMemory: Map<string, Variable> = new Map();
+   public buffer: string[] = [];
   
   // Optional variable count limit (null = unlimited)
   private maxVariableCount: number | null = null;
   private debugMode: boolean = false;
   
-   // Procedure state with pooling
-   private procStack: ProcStackFrame[] = [];
-   private forStack: Array<{ varName: string; endValue: number; forStartLine: number; endForLine: number; step: number }> = [];
-   private framePool: FramePool = new FramePool();
-   private procReturn: Variable = Num(0);
-   private shouldReturn: boolean = false;
+    // Procedure state with pooling
+    private procStack: ProcStackFrame[] = [];
+    private forStack: Array<{ varName: string; endValue: number; forStartLine: number; endForLine: number; step: number }> = [];
+    private framePool: FramePool = new FramePool();
+    private procReturn: Variable = Num(0);
+    private shouldReturn: boolean = false;
    
-   // TRY-CATCH state for error handling
-   private tryStack: Array<{ startLine: number; catchLine: number; endLine: number; errorVariable: string | null; errorOccurred: boolean }> = [];
-   private lastError: string = "";
-  
-  // Execution state
+   // Execution state
   private waitTicks: number = 0;
   private counter: number = 0;
   
-  // Custom opcodes
-  private customOpCodes: Map<string, OpCodeHandler> = new Map();
-  private importedModules: Set<string> = new Set();
-  
-  // Struct state
-  private structDefinitions: Map<string, StructDefinition> = new Map();
-  private currentStructDef: StructDefinition | null = null;
-  private inStructDef: boolean = false;
-  
-  // Math operation lookup tables (inlined for common ops)
+   // Custom opcodes
+   private customOpCodes: Map<string, OpCodeHandler> = new Map();
+   private importedModules: Set<string> = new Set();
+   
+   // Math operation lookup tables (inlined for common ops)
   private binaryMathOps: Map<string, (a: number, b: number) => number> = new Map([
     ["%", (a, b) => a % b],
     ["**", (a, b) => Math.pow(a, b)],
@@ -509,7 +437,7 @@ export class PanSparkVM {
        case 'variable': {
          const varNode = node as VariableNode;
          const variable = this.variableCheck(varNode.name, line);
-         if (variable.type !== PanSparkType.Number) {
+         if (variable.type !== CakeSparkType.Number) {
            throw new Error(`Variable "${varNode.name}" is not a number`);
          }
          return variable.value;
@@ -662,7 +590,7 @@ export class PanSparkVM {
      const numericValue = Number(variableName);
      if (!isNaN(numericValue)) {
        return {
-         type: PanSparkType.Number,
+         type: CakeSparkType.Number,
          value: numericValue
        }
      }
@@ -687,14 +615,14 @@ export class PanSparkVM {
      const numericValue = Number(value);
      if (!isNaN(numericValue)) {
        return {
-         type: PanSparkType.Number,
+         type: CakeSparkType.Number,
          value: numericValue
        }
      }
 
      // If it's not a variable or number, treat it as a string literal
      return {
-       type: PanSparkType.String,
+       type: CakeSparkType.String,
        value: value
      }
    }
@@ -742,11 +670,8 @@ export class PanSparkVM {
     this.jumpPoints.clear();
     this.procPoints.clear();
 
-      // Track FOR/ENDFOR and TRY/CATCH depth incrementally during compilation
-      let forDepth = 0;
-      let tryDepth = 0;
-      let structDepth = 0;
-      let structDef: StructDefinition | null = null;
+       // Track FOR/ENDFOR depth incrementally during compilation
+       let forDepth = 0;
 
       // Pass 1: Tokenize and create instructions
       for (let counter = 0; counter < lines.length; counter++) {
@@ -800,41 +725,7 @@ export class PanSparkVM {
           operation = opName;
         }
 
-        // Handle STRUCT and STRUCTEND for compilation
-        if (operation === OpCode.STRUCT) {
-          structDepth++;
-          const structName = tokens[1];
-          structDef = {
-            name: structName,
-            fields: new Map(),
-          };
-          continue; // Skip adding STRUCT to instructions
-        } else if (operation === OpCode.STRUCTEND) {
-          structDepth--;
-          if (structDef) {
-            this.structDefinitions.set(structDef.name, structDef);
-            structDef = null;
-          }
-          continue; // Skip adding STRUCTEND to instructions
-        }
-
-        // Handle struct field definitions (within STRUCT/STRUCTEND)
-        if (structDepth > 0 && operation !== OpCode.STRUCT && operation !== OpCode.STRUCTEND) {
-          // This is a field definition: fieldName: type (tokenizer produces [fieldName:, type])
-          if (tokens.length >= 2 && tokens[0].endsWith(':')) {
-            const fieldName = tokens[0].slice(0, -1); // Remove trailing ':'
-            const fieldType = tokens[1] as 'number' | 'string' | 'list';
-            if (!structDef) {
-              throw new Error(`Field definition outside STRUCT block at line ${counter + 1}`);
-            }
-            if (!['number', 'string', 'list'].includes(fieldType)) {
-              throw new Error(`Invalid field type "${fieldType}" at line ${counter + 1}`);
-            }
-            structDef.fields.set(fieldName, { type: fieldType });
-            continue; // Skip adding this as an instruction
-          }
-        }
-        
+         
         const compiledInstruction: CompiledInstruction = {
           operation,
           args: tokens.slice(1),
@@ -846,49 +737,28 @@ export class PanSparkVM {
          compiledInstruction.customHandler = this.customOpCodes.get(operation);
        }
        
-        // Track FOR/ENDFOR depth incrementally (O(1) instead of O(n²))
-        if (operation === OpCode.FOR) {
-          forDepth++;
-        } else if (operation === OpCode.ENDFOR) {
-          forDepth--;
-          if (forDepth < 0) {
-            throw new Error(`Unexpected ENDFOR at line ${counter + 1} without matching FOR`);
-          }
-        }
-        
-        // Track TRY/CATCH/ENDTRY depth
-        if (operation === OpCode.TRY) {
-          tryDepth++;
-        } else if (operation === OpCode.ENDTRY) {
-          tryDepth--;
-          if (tryDepth < 0) {
-            throw new Error(`Unexpected ENDTRY at line ${counter + 1} without matching TRY`);
-          }
-        }
-
-        // Track STRUCT/STRUCTEND depth
-        if (operation === OpCode.STRUCT) {
-          structDepth++;
-        } else if (operation === OpCode.STRUCTEND) {
-          structDepth--;
-          if (structDepth < 0) {
-            throw new Error(`Unexpected STRUCTEND at line ${counter + 1} without matching STRUCT`);
-          }
-        }
+         // Track FOR/ENDFOR depth incrementally (O(1) instead of O(n²))
+         if (operation === OpCode.FOR) {
+           forDepth++;
+         } else if (operation === OpCode.ENDFOR) {
+           forDepth--;
+           if (forDepth < 0) {
+             throw new Error(`Unexpected ENDFOR at line ${counter + 1} without matching FOR`);
+           }
+         }
        
        instructions.push(compiledInstruction);
      }
     
      // Pass 2: Register jump points and procedure boundaries
-     let procPoint = {
-       name: "",
-       startLine: 0,
-       endLine: 0
-     };
-     let procOpen = false;
-     let tryBlockStack: Array<{ startLine: number; catchIndex: number | null; errorVar: string | null }> = [];
-     
-     for (let counter = 0; counter < instructions.length; counter++) {
+      let procPoint = {
+        name: "",
+        startLine: 0,
+        endLine: 0
+      };
+      let procOpen = false;
+      
+      for (let counter = 0; counter < instructions.length; counter++) {
        const instruction = instructions[counter];
        
        if (instruction.operation === OpCode.POINT) {
@@ -906,42 +776,19 @@ export class PanSparkVM {
          }
        }
        
-       if (instruction.operation === OpCode.ENDPROC  ) {
-         if (!procOpen) {
-           throw new Error(`Unexpected '}' at line ${instruction.line} without matching PROC`);
-         }
-         procPoint.endLine = counter;
-         this.procPoints.set(procPoint.name, [procPoint.startLine, procPoint.endLine]);
-         procOpen = false;
-       }
-       
-       // Track TRY blocks for compilation
-       if (instruction.operation === OpCode.TRY) {
-         tryBlockStack.push({
-           startLine: counter,
-           catchIndex: null,
-           errorVar: instruction.args[0] || null
-         });
-       } else if (instruction.operation === OpCode.CATCH) {
-         if (tryBlockStack.length === 0) {
-           throw new Error(`Unexpected CATCH at line ${instruction.line} without matching TRY`);
-         }
-         tryBlockStack[tryBlockStack.length - 1].catchIndex = counter;
-       } else if (instruction.operation === OpCode.ENDTRY) {
-         if (tryBlockStack.length === 0) {
-           throw new Error(`Unexpected ENDTRY at line ${instruction.line} without matching TRY`);
-         }
-         tryBlockStack.pop();
-       }
-     }
+        if (instruction.operation === OpCode.ENDPROC  ) {
+          if (!procOpen) {
+            throw new Error(`Unexpected '}' at line ${instruction.line} without matching PROC`);
+          }
+          procPoint.endLine = counter;
+          this.procPoints.set(procPoint.name, [procPoint.startLine, procPoint.endLine]);
+          procOpen = false;
+        }
+      }
 
-     if (procOpen) {
-       throw new Error(`Unclosed PROC "${procPoint.name}" starting at line ${procPoint.startLine + 1}`);
-     }
-     
-     if (tryBlockStack.length > 0) {
-       throw new Error(`Unclosed TRY block starting at line ${tryBlockStack[0].startLine + 1}`);
-     }
+      if (procOpen) {
+        throw new Error(`Unclosed PROC "${procPoint.name}" starting at line ${procPoint.startLine + 1}`);
+      }
 
      // Pass 3: Pre-resolve jump targets and validate they exist
      for (let i = 0; i < instructions.length; i++) {
@@ -1117,45 +964,41 @@ export class PanSparkVM {
        } else {
          try {
          switch (instruction.operation) {
-            case OpCode.SET: {
-              if (instruction.args.length === 1) {
-                if (isNaN(Number(instruction.args[0]))) {
-                  this.setVariableMemory(instruction.args[0], Num(0));
-                } else {
-                  throw new Error(`Invalid variable name '${instruction.args[0]}' at line ${instruction.line}`);
-                }
-              } else {
-                // Check if the first argument is a string literal
-                const firstArg = instruction.args[0];
-                let value: Variable;
-                
-                // Empty strings should always be treated as string literals
-                if (firstArg === '') {
-                  value = Str('');
-                } else if (!isNaN(Number(firstArg))) {
-                  // It's a numeric literal
-                  value = Num(Number(firstArg));
-                } else if (this.structDefinitions.has(firstArg)) {
-                  // It's a struct type name - create instance
-                  const instance = this.createStructInstance(firstArg);
-                  value = Struct(instance);
-                } else {
-                  // It's either a string or a variable name
-                  // Check if it's defined as a variable first
-                  try {
-                    value = this.variableCheck(firstArg, instruction.line);
-                  } catch {
-                    // If not a variable, treat it as a string literal
-                    value = Str(firstArg);
-                  }
-                }
-                this.setVariableMemory(instruction.args[2], value);
-              }
-              break;
-            }
+             case OpCode.SET: {
+               if (instruction.args.length === 1) {
+                 if (isNaN(Number(instruction.args[0]))) {
+                   this.setVariableMemory(instruction.args[0], Num(0));
+                 } else {
+                   throw new Error(`Invalid variable name '${instruction.args[0]}' at line ${instruction.line}`);
+                 }
+               } else {
+                 // Check if the first argument is a string literal
+                 const firstArg = instruction.args[0];
+                 let value: Variable;
+                 
+                 // Empty strings should always be treated as string literals
+                 if (firstArg === '') {
+                   value = Str('');
+                 } else if (!isNaN(Number(firstArg))) {
+                   // It's a numeric literal
+                   value = Num(Number(firstArg));
+                 } else {
+                   // It's either a string or a variable name
+                   // Check if it's defined as a variable first
+                   try {
+                     value = this.variableCheck(firstArg, instruction.line);
+                   } catch {
+                     // If not a variable, treat it as a string literal
+                     value = Str(firstArg);
+                   }
+                 }
+                 this.setVariableMemory(instruction.args[2], value);
+               }
+               break;
+             }
           case OpCode.INC: {
             const incValue = this.variableCheck(instruction.args[0], instruction.line);
-            if (incValue.type !== PanSparkType.Number) {
+            if (incValue.type !== CakeSparkType.Number) {
               throw new Error(`The provided variable is not a number at line ${instruction.line}`)
             }
             this.setVariableMemory(instruction.args[0], Num(incValue.value + 1));
@@ -1164,7 +1007,7 @@ export class PanSparkVM {
           case OpCode.DEC: {
             const decValue = this.variableCheck(instruction.args[0], instruction.line);
             
-            if (decValue.type !== PanSparkType.Number) {
+            if (decValue.type !== CakeSparkType.Number) {
               throw new Error(`The provided variable is not a number at line ${instruction.line}`)
             }
             
@@ -1180,10 +1023,10 @@ export class PanSparkVM {
             const list = this.variableCheck(instruction.args[2], instruction.line);
             const value = this.variableCheck(instruction.args[0], instruction.line);
             
-            if (list.type !== PanSparkType.List) {
+            if (list.type !== CakeSparkType.List) {
               throw new Error(`The provided variable is not a list at line ${instruction.line}`)
             }
-            if (value.type !== PanSparkType.Number) {
+            if (value.type !== CakeSparkType.Number) {
               throw new Error(`The provided value is not a number at line ${instruction.line}`)
             }
             
@@ -1195,10 +1038,10 @@ export class PanSparkVM {
             const list = this.variableCheck(instruction.args[0], instruction.line);
             const index = this.variableCheck(instruction.args[1], instruction.line);
             
-            if (list.type !== PanSparkType.List) {
+            if (list.type !== CakeSparkType.List) {
               throw new Error(`The provided variable is not a list at line ${instruction.line}`)
             }
-            if (index.type !== PanSparkType.Number) {
+            if (index.type !== CakeSparkType.Number) {
               throw new Error(`The provided index is not a number at line ${instruction.line}`)
             }
             
@@ -1215,15 +1058,15 @@ export class PanSparkVM {
             const index = this.variableCheck(instruction.args[1], instruction.line);
             const value = this.variableCheck(instruction.args[0], instruction.line);
             
-            if (index.type !== PanSparkType.Number) {
+            if (index.type !== CakeSparkType.Number) {
               throw new Error(`The provided index is not a number at line ${instruction.line}`)
             }
             
-            if (value.type !== PanSparkType.Number) {
+            if (value.type !== CakeSparkType.Number) {
               throw new Error(`The provided value is not a number at line ${instruction.line}`)
             }
             
-            if (list.type !== PanSparkType.List) {
+            if (list.type !== CakeSparkType.List) {
               throw new Error(`The provided list is not a list at line ${instruction.line}`)
             }
             
@@ -1241,7 +1084,7 @@ export class PanSparkVM {
           }
            case OpCode.LIST_SORT: {
              const list = this.variableCheck(instruction.args[0], instruction.line);
-             if (list.type !== PanSparkType.List) {
+             if (list.type !== CakeSparkType.List) {
                throw new Error(`The provided list is not a list at line ${instruction.line}`)
              }
              
@@ -1264,7 +1107,7 @@ export class PanSparkVM {
               const list = this.variableCheck(instruction.args[0], instruction.line);
               const destVar = instruction.args[arrowIndex + 1];
               
-              if (list.type !== PanSparkType.List) {
+              if (list.type !== CakeSparkType.List) {
                 throw new Error(`The provided variable is not a list at line ${instruction.line}`);
               }
               
@@ -1281,7 +1124,7 @@ export class PanSparkVM {
               const list = this.variableCheck(instruction.args[0], instruction.line);
               const destVar = instruction.args[arrowIndex + 1];
               
-              if (list.type !== PanSparkType.List) {
+              if (list.type !== CakeSparkType.List) {
                 throw new Error(`The provided variable is not a list at line ${instruction.line}`);
               }
               
@@ -1300,10 +1143,10 @@ export class PanSparkVM {
               const value = this.variableCheck(instruction.args[1], instruction.line);
               const destVar = instruction.args[arrowIndex + 1];
               
-              if (list.type !== PanSparkType.List) {
+              if (list.type !== CakeSparkType.List) {
                 throw new Error(`The provided variable is not a list at line ${instruction.line}`);
               }
-              if (value.type !== PanSparkType.Number) {
+              if (value.type !== CakeSparkType.Number) {
                 throw new Error(`The search value must be a number at line ${instruction.line}`);
               }
               
@@ -1322,10 +1165,10 @@ export class PanSparkVM {
               const value = this.variableCheck(instruction.args[1], instruction.line);
               const destVar = instruction.args[arrowIndex + 1];
               
-              if (list.type !== PanSparkType.List) {
+              if (list.type !== CakeSparkType.List) {
                 throw new Error(`The provided variable is not a list at line ${instruction.line}`);
               }
-              if (value.type !== PanSparkType.Number) {
+              if (value.type !== CakeSparkType.Number) {
                 throw new Error(`The search value must be a number at line ${instruction.line}`);
               }
               
@@ -1344,10 +1187,10 @@ export class PanSparkVM {
               const value = this.variableCheck(instruction.args[1], instruction.line);
               const destVar = instruction.args[arrowIndex + 1];
               
-              if (list.type !== PanSparkType.List) {
+              if (list.type !== CakeSparkType.List) {
                 throw new Error(`The provided variable is not a list at line ${instruction.line}`);
               }
-              if (value.type !== PanSparkType.Number) {
+              if (value.type !== CakeSparkType.Number) {
                 throw new Error(`The search value must be a number at line ${instruction.line}`);
               }
               
@@ -1366,10 +1209,10 @@ export class PanSparkVM {
               const index = this.variableCheck(instruction.args[1], instruction.line);
               const destVar = instruction.args[arrowIndex + 1];
               
-              if (list.type !== PanSparkType.List) {
+              if (list.type !== CakeSparkType.List) {
                 throw new Error(`The provided variable is not a list at line ${instruction.line}`);
               }
-              if (index.type !== PanSparkType.Number) {
+              if (index.type !== CakeSparkType.Number) {
                 throw new Error(`The index must be a number at line ${instruction.line}`);
               }
               
@@ -1381,270 +1224,7 @@ export class PanSparkVM {
               this.setVariableMemory(destVar, Num(removed));
               break;
             }
-           case OpCode.CONCAT: {
-             // CONCAT string1 string2 >> result
-             const arrowIndex = instruction.args.indexOf(">>");
-             if (arrowIndex === -1 || arrowIndex < 2 || arrowIndex === instruction.args.length - 1) {
-               throw new Error(`Invalid CONCAT syntax at line ${instruction.line}. Expected: CONCAT string1 string2 >> result`);
-             }
-             
-             const str1 = this.variableCheck(instruction.args[0], instruction.line);
-             const str2 = this.variableCheck(instruction.args[1], instruction.line);
-             const destVar = instruction.args[arrowIndex + 1];
-             
-             // Convert both to strings
-             let str1Val = '';
-             let str2Val = '';
-             
-             if (str1.type === PanSparkType.String) {
-               str1Val = str1.value;
-             } else if (str1.type === PanSparkType.Number) {
-               str1Val = str1.value.toString();
-             } else {
-               throw new Error(`Cannot concatenate list at line ${instruction.line}`);
-             }
-             
-             if (str2.type === PanSparkType.String) {
-               str2Val = str2.value;
-             } else if (str2.type === PanSparkType.Number) {
-               str2Val = str2.value.toString();
-             } else {
-               throw new Error(`Cannot concatenate list at line ${instruction.line}`);
-             }
-             
-             const result = str1Val + str2Val;
-             this.setVariableMemory(destVar, Str(result));
-             break;
-           }
-           case OpCode.STRLEN: {
-             // STRLEN string >> result
-             const arrowIndex = instruction.args.indexOf(">>");
-             if (arrowIndex === -1 || arrowIndex === 0 || arrowIndex === instruction.args.length - 1) {
-               throw new Error(`Invalid STRLEN syntax at line ${instruction.line}. Expected: STRLEN string >> result`);
-             }
-             
-             const str = this.variableCheck(instruction.args[0], instruction.line);
-             const destVar = instruction.args[arrowIndex + 1];
-             let len = 0;
-             
-             if (str.type === PanSparkType.String) {
-               len = str.value.length;
-             } else if (str.type === PanSparkType.Number) {
-               len = str.value.toString().length;
-             } else {
-               throw new Error(`Cannot get length of list at line ${instruction.line}`);
-             }
-             
-             this.setVariableMemory(destVar, Num(len));
-             break;
-           }
-            case OpCode.SUBSTR: {
-              // SUBSTR string start end >> result
-              const arrowIndex = instruction.args.indexOf(">>");
-              if (arrowIndex === -1 || arrowIndex < 3 || arrowIndex === instruction.args.length - 1) {
-                throw new Error(`Invalid SUBSTR syntax at line ${instruction.line}. Expected: SUBSTR string start end >> result`);
-              }
-              
-              const str = this.variableCheck(instruction.args[0], instruction.line);
-              const start = this.variableCheck(instruction.args[1], instruction.line);
-              const end = this.variableCheck(instruction.args[2], instruction.line);
-              const destVar = instruction.args[arrowIndex + 1];
-              
-              if (start.type !== PanSparkType.Number || end.type !== PanSparkType.Number) {
-                throw new Error(`SUBSTR indices must be numbers at line ${instruction.line}`);
-              }
-              
-              let strVal = '';
-              if (str.type === PanSparkType.String) {
-                strVal = str.value;
-              } else if (str.type === PanSparkType.Number) {
-                strVal = str.value.toString();
-              } else {
-                throw new Error(`Cannot substring a list at line ${instruction.line}`);
-              }
-              
-              const result = strVal.substring(start.value, end.value);
-              this.setVariableMemory(destVar, Str(result));
-              break;
-            }
-            case OpCode.STR_UPPER: {
-              // STR_UPPER string >> result
-              const arrowIndex = instruction.args.indexOf(">>");
-              if (arrowIndex === -1 || arrowIndex === 0 || arrowIndex === instruction.args.length - 1) {
-                throw new Error(`Invalid STR_UPPER syntax at line ${instruction.line}. Expected: STR_UPPER string >> result`);
-              }
-              
-              const str = this.variableCheck(instruction.args[0], instruction.line);
-              const destVar = instruction.args[arrowIndex + 1];
-              
-              let strVal = '';
-              if (str.type === PanSparkType.String) {
-                strVal = str.value;
-              } else if (str.type === PanSparkType.Number) {
-                strVal = str.value.toString();
-              } else {
-                throw new Error(`Cannot uppercase a list at line ${instruction.line}`);
-              }
-              
-              this.setVariableMemory(destVar, Str(strVal.toUpperCase()));
-              break;
-            }
-            case OpCode.STR_LOWER: {
-              // STR_LOWER string >> result
-              const arrowIndex = instruction.args.indexOf(">>");
-              if (arrowIndex === -1 || arrowIndex === 0 || arrowIndex === instruction.args.length - 1) {
-                throw new Error(`Invalid STR_LOWER syntax at line ${instruction.line}. Expected: STR_LOWER string >> result`);
-              }
-              
-              const str = this.variableCheck(instruction.args[0], instruction.line);
-              const destVar = instruction.args[arrowIndex + 1];
-              
-              let strVal = '';
-              if (str.type === PanSparkType.String) {
-                strVal = str.value;
-              } else if (str.type === PanSparkType.Number) {
-                strVal = str.value.toString();
-              } else {
-                throw new Error(`Cannot lowercase a list at line ${instruction.line}`);
-              }
-              
-              this.setVariableMemory(destVar, Str(strVal.toLowerCase()));
-              break;
-            }
-            case OpCode.STR_TRIM: {
-              // STR_TRIM string >> result
-              const arrowIndex = instruction.args.indexOf(">>");
-              if (arrowIndex === -1 || arrowIndex === 0 || arrowIndex === instruction.args.length - 1) {
-                throw new Error(`Invalid STR_TRIM syntax at line ${instruction.line}. Expected: STR_TRIM string >> result`);
-              }
-              
-              const str = this.variableCheck(instruction.args[0], instruction.line);
-              const destVar = instruction.args[arrowIndex + 1];
-              
-              let strVal = '';
-              if (str.type === PanSparkType.String) {
-                strVal = str.value;
-              } else if (str.type === PanSparkType.Number) {
-                strVal = str.value.toString();
-              } else {
-                throw new Error(`Cannot trim a list at line ${instruction.line}`);
-              }
-              
-              this.setVariableMemory(destVar, Str(strVal.trim()));
-              break;
-            }
-            case OpCode.STR_REPLACE: {
-              // STR_REPLACE string find replace >> result
-              const arrowIndex = instruction.args.indexOf(">>");
-              if (arrowIndex === -1 || arrowIndex < 3 || arrowIndex === instruction.args.length - 1) {
-                throw new Error(`Invalid STR_REPLACE syntax at line ${instruction.line}. Expected: STR_REPLACE string find replace >> result`);
-              }
-              
-              const str = this.variableOrStringLiteral(instruction.args[0], instruction.line);
-              const find = this.variableOrStringLiteral(instruction.args[1], instruction.line);
-              const replace = this.variableOrStringLiteral(instruction.args[2], instruction.line);
-              const destVar = instruction.args[arrowIndex + 1];
-              
-              let strVal = '';
-              if (str.type === PanSparkType.String) {
-                strVal = str.value;
-              } else if (str.type === PanSparkType.Number) {
-                strVal = str.value.toString();
-              } else {
-                throw new Error(`Cannot replace in a list at line ${instruction.line}`);
-              }
-              
-              let findVal = '';
-              if (find.type === PanSparkType.String) {
-                findVal = find.value;
-              } else if (find.type === PanSparkType.Number) {
-                findVal = find.value.toString();
-              } else {
-                throw new Error(`Find pattern cannot be a list at line ${instruction.line}`);
-              }
-              
-              let replaceVal = '';
-              if (replace.type === PanSparkType.String) {
-                replaceVal = replace.value;
-              } else if (replace.type === PanSparkType.Number) {
-                replaceVal = replace.value.toString();
-              } else {
-                throw new Error(`Replace value cannot be a list at line ${instruction.line}`);
-              }
-              
-              const result = strVal.replace(new RegExp(findVal, 'g'), replaceVal);
-              this.setVariableMemory(destVar, Str(result));
-              break;
-            }
-            case OpCode.STR_CONTAINS: {
-              // STR_CONTAINS string substring >> result (returns 1 or 0)
-              const arrowIndex = instruction.args.indexOf(">>");
-              if (arrowIndex === -1 || arrowIndex < 2 || arrowIndex === instruction.args.length - 1) {
-                throw new Error(`Invalid STR_CONTAINS syntax at line ${instruction.line}. Expected: STR_CONTAINS string substring >> result`);
-              }
-              
-              const str = this.variableOrStringLiteral(instruction.args[0], instruction.line);
-              const search = this.variableOrStringLiteral(instruction.args[1], instruction.line);
-              const destVar = instruction.args[arrowIndex + 1];
-              
-              let strVal = '';
-              if (str.type === PanSparkType.String) {
-                strVal = str.value;
-              } else if (str.type === PanSparkType.Number) {
-                strVal = str.value.toString();
-              } else {
-                throw new Error(`Cannot search in a list at line ${instruction.line}`);
-              }
-              
-              let searchVal = '';
-              if (search.type === PanSparkType.String) {
-                searchVal = search.value;
-              } else if (search.type === PanSparkType.Number) {
-                searchVal = search.value.toString();
-              } else {
-                throw new Error(`Search pattern cannot be a list at line ${instruction.line}`);
-              }
-              
-              const result = strVal.includes(searchVal) ? 1 : 0;
-              this.setVariableMemory(destVar, Num(result));
-              break;
-            }
-            case OpCode.STR_CHAR: {
-              // STR_CHAR string index >> result
-              const arrowIndex = instruction.args.indexOf(">>");
-              if (arrowIndex === -1 || arrowIndex < 2 || arrowIndex === instruction.args.length - 1) {
-                throw new Error(`Invalid STR_CHAR syntax at line ${instruction.line}. Expected: STR_CHAR string index >> result`);
-              }
-              
-              const str = this.variableCheck(instruction.args[0], instruction.line);
-              const index = this.variableCheck(instruction.args[1], instruction.line);
-              const destVar = instruction.args[arrowIndex + 1];
-              
-              if (index.type !== PanSparkType.Number) {
-                throw new Error(`STR_CHAR index must be a number at line ${instruction.line}`);
-              }
-              
-              let strVal = '';
-              if (str.type === PanSparkType.String) {
-                strVal = str.value;
-              } else if (str.type === PanSparkType.Number) {
-                strVal = str.value.toString();
-              } else {
-                throw new Error(`Cannot get character from a list at line ${instruction.line}`);
-              }
-              
-              const char = strVal.charAt(index.value);
-              this.setVariableMemory(destVar, Str(char));
-              break;
-            }
-           case OpCode.FREE: {
-             if (this.procLock) {
-               this.procVariableMemory.delete(instruction.args[0]);
-             } else {
-               this.variableMemory.delete(instruction.args[0]);
-             }
-             break;
-           }
+
            case OpCode.MEMDUMP: {
              this.buffer.push(`DUMPING MEMORY at line ${instruction.line}`);
              if (this.procLock) {
@@ -1668,67 +1248,6 @@ export class PanSparkVM {
              this.buffer.push("END OF MEMORY DUMP");
              break;
            }
-           case OpCode.MEMSTATS: {
-             // Calculate memory statistics
-             const globalVarCount = this.variableMemory.size;
-             const localVarCount = this.procLock ? this.procVariableMemory.size : 0;
-             
-             // Calculate memory size estimate (rough approximation)
-             let globalMemSize = 0;
-             for (const [key, value] of this.variableMemory.entries()) {
-               globalMemSize += key.length; // variable name
-               if (value.type === PanSparkType.Number) {
-                 globalMemSize += 8; // number size
-               } else if (value.type === PanSparkType.String) {
-                 globalMemSize += value.value.length;
-               } else if (value.type === PanSparkType.List) {
-                 globalMemSize += value.value.length * 8;
-               }
-             }
-             
-             let localMemSize = 0;
-             if (this.procLock) {
-               for (const [key, value] of this.procVariableMemory.entries()) {
-                 localMemSize += key.length;
-                 if (value.type === PanSparkType.Number) {
-                   localMemSize += 8;
-                 } else if (value.type === PanSparkType.String) {
-                   localMemSize += value.value.length;
-                 } else if (value.type === PanSparkType.List) {
-                   localMemSize += value.value.length * 8;
-                 }
-               }
-             }
-             
-             const procDepth = this.procLock ? this.procStack.length : 0;
-             
-             // Check for >> operator to determine if storing to variable
-             const arrowIndex = instruction.args.indexOf(">>");
-             let targetVar = null;
-             if (arrowIndex !== -1 && arrowIndex < instruction.args.length - 1) {
-               targetVar = instruction.args[arrowIndex + 1];
-             }
-             
-             if (targetVar) {
-               // If target variable specified, store stats as a string
-               const stats = `STATS:GlobalVars=${globalVarCount},LocalVars=${localVarCount},GlobalMem=${globalMemSize}B,LocalMem=${localMemSize}B,ProcDepth=${procDepth}`;
-               this.setVariableMemory(targetVar, Str(stats));
-             } else {
-               // Otherwise, print to buffer
-               this.buffer.push(`=== MEMORY STATISTICS ===`);
-               this.buffer.push(`Global Variables: ${globalVarCount}`);
-               this.buffer.push(`Local Variables: ${localVarCount}`);
-               this.buffer.push(`Global Memory: ~${globalMemSize} bytes`);
-               this.buffer.push(`Local Memory: ~${localMemSize} bytes`);
-               this.buffer.push(`Procedure Depth: ${procDepth}`);
-               if (this.maxVariableCount > 0) {
-                 const remainingVars = this.maxVariableCount - globalVarCount - localVarCount;
-                 this.buffer.push(`Variable Limit: ${this.maxVariableCount} (${remainingVars} remaining)`);
-               }
-               this.buffer.push(`Total Ticks: ${this.counter}`);
-             }
-             break;
-           }
            case OpCode.NOP: {
              break;
            }
@@ -1743,11 +1262,11 @@ export class PanSparkVM {
             // Try to treat it as a variable first
             try {
               const printVar = this.variableCheck(arg, instruction.line);
-              if (printVar.type === PanSparkType.Number) {
+              if (printVar.type === CakeSparkType.Number) {
                 this.buffer.push(printVar.value.toString());
-              } else if (printVar.type === PanSparkType.String) {
+              } else if (printVar.type === CakeSparkType.String) {
                 this.buffer.push(printVar.value);
-              } else if (printVar.type === PanSparkType.List) {
+              } else if (printVar.type === CakeSparkType.List) {
                 this.buffer.push("[" + printVar.value.toString()+"]");
               }
             } catch (e) {
@@ -1777,13 +1296,13 @@ export class PanSparkVM {
                let typeString = '';
                
                switch (variable.type) {
-                 case PanSparkType.Number:
+                 case CakeSparkType.Number:
                    typeString = 'number';
                    break;
-                 case PanSparkType.String:
+                 case CakeSparkType.String:
                    typeString = 'string';
                    break;
-                 case PanSparkType.List:
+                 case CakeSparkType.List:
                    typeString = 'list';
                    break;
                }
@@ -1813,7 +1332,7 @@ export class PanSparkVM {
               const op = expressionArgs[1];
               if (this.unaryMathOps.has(op)) {
                 const arg = this.variableCheck(expressionArgs[0], line);
-                if (arg.type !== PanSparkType.Number) {
+                if (arg.type !== CakeSparkType.Number) {
                   throw new Error(`The provided variable is not a number at line ${line}`);
                 }
                 const result = this.executeUnaryMath(arg.value, op);
@@ -1834,7 +1353,7 @@ export class PanSparkVM {
                    const arg1 = this.variableCheck(firstArg, line);
                    const arg2 = this.variableCheck(expressionArgs[2], line);
                    
-                   if (arg1.type !== PanSparkType.Number || arg2.type !== PanSparkType.Number) {
+                   if (arg1.type !== CakeSparkType.Number || arg2.type !== CakeSparkType.Number) {
                      throw new Error(`The provided variables are not numbers at line ${line}`);
                    }
                    
@@ -1897,13 +1416,13 @@ export class PanSparkVM {
                let val1: number;
                let val2: number;
                
-               if (argument1.type === PanSparkType.Number) {
+               if (argument1.type === CakeSparkType.Number) {
                  val1 = argument1.value;
                } else {
                  throw new Error(`Cannot compare non-numeric value at line ${instruction.line}`);
                }
                
-               if (argument2.type === PanSparkType.Number) {
+               if (argument2.type === CakeSparkType.Number) {
                  val2 = argument2.value;
                } else {
                  throw new Error(`Cannot compare non-numeric value at line ${instruction.line}`);
@@ -1925,7 +1444,7 @@ export class PanSparkVM {
                const notArg = instructionArgs[1];
                try {
                  const val = this.variableCheck(notArg, instruction.line);
-                 if (val.type === PanSparkType.Number) {
+                 if (val.type === CakeSparkType.Number) {
                    check = val.value === 0;
                  } else {
                    throw new Error(`NOT requires a numeric value at line ${instruction.line}`);
@@ -1945,7 +1464,7 @@ export class PanSparkVM {
                  const op1 = instructionArgs[1];
                  const arg2 = this.variableCheck(instructionArgs[2], instruction.line);
                  
-                 if (arg1.type !== PanSparkType.Number || arg2.type !== PanSparkType.Number) {
+                 if (arg1.type !== CakeSparkType.Number || arg2.type !== CakeSparkType.Number) {
                    throw new Error(`Comparison values must be numbers at line ${instruction.line}`);
                  }
                  
@@ -1968,7 +1487,7 @@ export class PanSparkVM {
                  const op2 = instructionArgs[5];
                  const arg4 = this.variableCheck(instructionArgs[6], instruction.line);
                  
-                 if (arg3.type !== PanSparkType.Number || arg4.type !== PanSparkType.Number) {
+                 if (arg3.type !== CakeSparkType.Number || arg4.type !== CakeSparkType.Number) {
                    throw new Error(`Comparison values must be numbers at line ${instruction.line}`);
                  }
                  
@@ -2093,7 +1612,7 @@ export class PanSparkVM {
             let step = 1;
             if (instructionArgs.length >= 4) {
               const stepValue = this.variableCheck(instructionArgs[3], instruction.line);
-              if (stepValue.type !== PanSparkType.Number) {
+              if (stepValue.type !== CakeSparkType.Number) {
                 throw new Error(`FOR loop step must be a number at line ${instruction.line}`);
               }
               step = stepValue.value;
@@ -2102,7 +1621,7 @@ export class PanSparkVM {
               }
             }
             
-            if (startValue.type !== PanSparkType.Number || endValue.type !== PanSparkType.Number) {
+            if (startValue.type !== CakeSparkType.Number || endValue.type !== CakeSparkType.Number) {
               throw new Error(`FOR loop bounds must be numbers at line ${instruction.line}`);
             }
             
@@ -2141,7 +1660,7 @@ export class PanSparkVM {
             const loopInfo = this.forStack[this.forStack.length - 1];
             const loopVar = this.variableCheck(loopInfo.varName, instruction.line);
             
-            if (loopVar.type !== PanSparkType.Number) {
+            if (loopVar.type !== CakeSparkType.Number) {
               throw new Error(`Loop variable must be a number at line ${instruction.line}`);
             }
             
@@ -2181,7 +1700,7 @@ export class PanSparkVM {
             const loopInfo = this.forStack[this.forStack.length - 1];
             const loopVar = this.variableCheck(loopInfo.varName, instruction.line);
             
-            if (loopVar.type !== PanSparkType.Number) {
+            if (loopVar.type !== CakeSparkType.Number) {
               throw new Error(`Loop variable must be a number at line ${instruction.line}`);
             }
             
@@ -2241,7 +1760,7 @@ export class PanSparkVM {
              const instructionArgs = instruction.args;
              if (instructionArgs[0]) {
                const amount = this.variableCheck(instructionArgs[0], instruction.line)
-               if (amount.type === PanSparkType.Number) {
+               if (amount.type === CakeSparkType.Number) {
                  this.waitTicks = Math.floor(amount.value);
                } else {
                  throw new Error(`WAIT requires a numeric value at line ${instruction.line}`);
@@ -2249,150 +1768,14 @@ export class PanSparkVM {
              }
              break;
            }
-           case OpCode.TRY: {
-             // TRY errorVar
-             const errorVar = instruction.args[0] || "_error";
-             
-             // Find matching CATCH
-             let catchLine = -1;
-             let depth = 0;
-             for (let i = this.counter + 1; i < instructions.length; i++) {
-               if (instructions[i].operation === OpCode.TRY) depth++;
-               if (instructions[i].operation === OpCode.CATCH && depth === 0) {
-                 catchLine = i;
-                 break;
-               }
-               if (instructions[i].operation === OpCode.ENDTRY && depth === 0) break;
-               if (instructions[i].operation === OpCode.ENDTRY) depth--;
-             }
-             
-             if (catchLine === -1) {
-               throw new Error(`TRY without CATCH at line ${instruction.line}`);
-             }
-             
-             // Find matching ENDTRY
-             let endTryLine = -1;
-             depth = 0;
-             for (let i = this.counter + 1; i < instructions.length; i++) {
-               if (instructions[i].operation === OpCode.TRY) depth++;
-               if (instructions[i].operation === OpCode.ENDTRY && depth === 0) {
-                 endTryLine = i;
-                 break;
-               }
-               if (instructions[i].operation === OpCode.ENDTRY) depth--;
-             }
-             
-             if (endTryLine === -1) {
-               throw new Error(`TRY without ENDTRY at line ${instruction.line}`);
-             }
-             
-              this.tryStack.push({
-                startLine: this.counter,
-                catchLine: catchLine,
-                endLine: endTryLine,
-                errorVariable: errorVar,
-                errorOccurred: false
-              });
-             break;
-           }
-            case OpCode.CATCH: {
-              // Check if we reached CATCH due to an error
-              if (this.tryStack.length > 0 && !this.tryStack[this.tryStack.length - 1].errorOccurred) {
-                // No error occurred, skip CATCH block and go to ENDTRY
-                const tryBlock = this.tryStack[this.tryStack.length - 1];
-                this.counter = tryBlock.endLine;
-              }
-              // If error occurred, just continue normally to execute CATCH block
-              break;
-            }
-           case OpCode.ENDTRY: {
-             // End of TRY block, pop from stack
-             if (this.tryStack.length > 0) {
-               this.tryStack.pop();
-             }
-             break;
-           }
-             case OpCode.THROW: {
-               // THROW message
-               const errorMsg = instruction.args[0] || "An error occurred";
-               this.lastError = errorMsg;
-               
-               if (this.tryStack.length > 0) {
-                 const tryBlock = this.tryStack[this.tryStack.length - 1];
-                 // Set error variable and jump to CATCH
-                 this.setVariableMemory(tryBlock.errorVariable, Str(errorMsg));
-                 // Mark that an error occurred
-                 tryBlock.errorOccurred = true;
-                 this.counter = tryBlock.catchLine - 1;
-               } else {
-                 throw new Error(`THROW: ${errorMsg}`);
-               }
-               break;
-             }
-
-            case OpCode.STRUCT_GET: {
-              // STRUCT_GET var.field >> result
-              const varFieldStr = instruction.args[0];
-              const [varName, fieldName] = varFieldStr.split('.');
-
-              const varValue = this.variableCheck(varName, instruction.line);
-              if (varValue.type !== PanSparkType.Struct) {
-                throw new Error(`Variable "${varName}" is not a struct at line ${instruction.line}`);
-              }
-
-              const fieldValue = this.getStructField(varValue.value, fieldName);
-              const destVar = instruction.args[2];
-              this.setVariableMemory(destVar, fieldValue);
-              break;
-            }
-
-            case OpCode.STRUCT_SET: {
-              // STRUCT_SET var.field value
-              const varFieldStr = instruction.args[0];
-              const [varName, fieldName] = varFieldStr.split('.');
-              const valueArg = instruction.args[1];
-
-              const varValue = this.variableCheck(varName, instruction.line);
-              if (varValue.type !== PanSparkType.Struct) {
-                throw new Error(`Variable "${varName}" is not a struct at line ${instruction.line}`);
-              }
-
-              // Try to get as variable first, fall back to string literal
-              let value: Variable;
-              try {
-                value = this.variableCheck(valueArg, instruction.line);
-              } catch {
-                // Not a variable, treat as string literal
-                value = Str(valueArg);
-              }
-
-              this.setStructField(varValue.value, fieldName, value);
-              break;
-            }
 
             default:
               throw new Error(`Unknown operation ${instruction.operation} at line ${instruction.line}`);
          }
           } catch (err) {
-            // If an error occurs during execution and we're in a TRY block, catch it
-            if (this.tryStack.length > 0) {
-              const tryBlock = this.tryStack[this.tryStack.length - 1];
-              const errorMessage = err instanceof Error ? err.message : String(err);
-              
-              // Store the error message to buffer
-              this.buffer.push(errorMessage);
-              this.setVariableMemory(tryBlock.errorVariable, Str(errorMessage));
-              
-              // Mark that an error occurred
-              tryBlock.errorOccurred = true;
-              
-              // Jump to CATCH block
-              this.counter = tryBlock.catchLine - 1;
-            } else {
-              // No TRY block, re-throw the error
-              throw err;
-            }
-          }
+             // Re-throw the error - no TRY/CATCH support
+             throw err;
+           }
        }
        this.counter++;
      }
@@ -2400,25 +1783,20 @@ export class PanSparkVM {
    }
 
     public resetVM(): void {
-      this.variableMemory.clear();
-      this.jumpPoints.clear();
-      this.procPoints.clear();
-      this.buffer = [];
-      this.forStack = [];
-      this.procStack = [];
-      this.forStack = [];
-      this.framePool.clear();
-      this.procReturn = Num(0);
-      this.shouldReturn = false;
-      this.waitTicks = 0;
-      this.counter = 0;
-      this.importedModules.clear();
-      this.tryStack = [];
-      this.lastError = "";
-      this.structDefinitions.clear();
-      this.inStructDef = false;
-      this.currentStructDef = null;
-    }
+       this.variableMemory.clear();
+       this.jumpPoints.clear();
+       this.procPoints.clear();
+       this.buffer = [];
+       this.forStack = [];
+       this.procStack = [];
+       this.forStack = [];
+       this.framePool.clear();
+       this.procReturn = Num(0);
+       this.shouldReturn = false;
+       this.waitTicks = 0;
+       this.counter = 0;
+       this.importedModules.clear();
+     }
 
   public getBuffer(): string[] {
     return this.buffer;
@@ -2449,43 +1827,36 @@ export class PanSparkVM {
     * @returns Serialized state string (respects 32767 character limit per chunk)
     * @throws Error if state exceeds maximum chunk size
     */
-    public saveState(instructions?: CompiledInstruction[]): string {
-      const state = {
-        uuid: this.uuid,
-        counter: this.counter,
+     public saveState(instructions?: CompiledInstruction[]): string {
+       const state = {
+         counter: this.counter,
         waitTicks: this.waitTicks,
         variableMemory: this.serializeVariableMap(this.variableMemory),
         jumpPoints: Array.from(this.jumpPoints.entries()),
         procPoints: Array.from(this.procPoints.entries()),
-        procStack: this.procStack.map(frame => ({
-          variableMemory: this.serializeVariableMap(frame.variableMemory),
-          returnLocation: frame.returnLocation,
-          returnValueTarget: frame.returnValueTarget,
-          procStartLine: frame.procStartLine,
-          procEndLine: frame.procEndLine,
-          procName: frame.procName,
-          args: frame.args.map(arg => this.serializeVariable(arg)),
-        })),
-        forStack: this.forStack,
-        tryStack: this.tryStack,
-        lastError: this.lastError,
-        procReturn: this.serializeVariable(this.procReturn),
-        shouldReturn: this.shouldReturn,
-        buffer: this.buffer,
-        maxVariableCount: this.maxVariableCount,
-        debugMode: this.debugMode,
-         instructions: instructions ? instructions.map(inst => ({
-           operation: inst.operation,
-           args: inst.args,
-           line: inst.line,
-           jumpTarget: inst.jumpTarget,
-           endForIndex: inst.endForIndex,
-         })) : null,
-         structDefinitions: Array.from(this.structDefinitions.entries()).map(([name, def]) => ({
-           name,
-           fields: Array.from(def.fields.entries()),
+         procStack: this.procStack.map(frame => ({
+           variableMemory: this.serializeVariableMap(frame.variableMemory),
+           returnLocation: frame.returnLocation,
+           returnValueTarget: frame.returnValueTarget,
+           procStartLine: frame.procStartLine,
+           procEndLine: frame.procEndLine,
+           procName: frame.procName,
+           args: frame.args.map(arg => this.serializeVariable(arg)),
          })),
-       };
+         forStack: this.forStack,
+         procReturn: this.serializeVariable(this.procReturn),
+         shouldReturn: this.shouldReturn,
+         buffer: this.buffer,
+         maxVariableCount: this.maxVariableCount,
+         debugMode: this.debugMode,
+          instructions: instructions ? instructions.map(inst => ({
+            operation: inst.operation,
+            args: inst.args,
+            line: inst.line,
+            jumpTarget: inst.jumpTarget,
+            endForIndex: inst.endForIndex,
+          })) : null,
+        };
        
        const serialized = JSON.stringify(state);
       const MAX_SIZE = 32767;
@@ -2516,10 +1887,9 @@ export class PanSparkVM {
           );
         }
         
-        const state = JSON.parse(serializedState);
-        
-        this.uuid = state.uuid;
-        this.counter = state.counter;
+         const state = JSON.parse(serializedState);
+         
+         this.counter = state.counter;
         this.waitTicks = state.waitTicks;
         this.variableMemory = this.deserializeVariableMap(state.variableMemory);
         this.jumpPoints = new Map(state.jumpPoints);
@@ -2534,24 +1904,11 @@ export class PanSparkVM {
           args: frameData.args.map((arg: any) => this.deserializeVariable(arg)),
         }));
          this.forStack = state.forStack;
-         this.tryStack = state.tryStack || [];
-         this.lastError = state.lastError || "";
          this.procReturn = this.deserializeVariable(state.procReturn);
          this.shouldReturn = state.shouldReturn;
          this.buffer = state.buffer;
          this.maxVariableCount = state.maxVariableCount;
          this.debugMode = state.debugMode;
-
-         // Restore struct definitions
-         this.structDefinitions.clear();
-         if (state.structDefinitions) {
-           for (const structDef of state.structDefinitions) {
-             this.structDefinitions.set(structDef.name, {
-               name: structDef.name,
-               fields: new Map(structDef.fields),
-             });
-           }
-         }
          
          // Return instructions if they were saved
          if (state.instructions) {
@@ -2575,28 +1932,21 @@ export class PanSparkVM {
      };
    }
 
-   /**
-    * Deserializes a Variable object from JSON format
-    */
-    private deserializeVariable(data: any): Variable {
-      switch (data.type) {
-        case PanSparkType.Number:
-          return Num(data.value);
-        case PanSparkType.String:
-          return Str(data.value);
-        case PanSparkType.List:
-          return List(data.value);
-        case PanSparkType.Struct: {
-          const structData = new Map();
-          for (const [key, val] of Object.entries(data.value.data || {})) {
-            structData.set(key, this.deserializeVariable(val));
-          }
-          return Struct({ structName: data.value.structName, data: structData });
-        }
-        default:
-          throw new Error(`Unknown variable type: ${data.type}`);
-      }
-    }
+    /**
+     * Deserializes a Variable object from JSON format
+     */
+     private deserializeVariable(data: any): Variable {
+       switch (data.type) {
+         case CakeSparkType.Number:
+           return Num(data.value);
+         case CakeSparkType.String:
+           return Str(data.value);
+         case CakeSparkType.List:
+           return List(data.value);
+         default:
+           throw new Error(`Unknown variable type: ${data.type}`);
+       }
+     }
 
    /**
     * Serializes a Map of variables to an array of [key, serialized_variable] pairs
@@ -2618,237 +1968,8 @@ export class PanSparkVM {
      }
      return varMap;
    }
-
-   // ============ QR CODE COMPRESSION ============
-
-   /**
-    * Compress PanSpark code for QR encoding by removing comments and unnecessary whitespace
-    */
-   public compressCode(code: string): string {
-      // Process line by line - enforce that code uses newlines to separate statements
-      return code
-        .split('\n')
-        .map(line => {
-          // Remove inline comments
-          const commentIdx = line.indexOf('//');
-          const cleanLine = commentIdx > -1 ? line.substring(0, commentIdx) : line;
-          return cleanLine.trim();
-        })
-        .filter(line => line.length > 0)
-        .join('\n');  // Preserve newlines - they are REQUIRED by the language
-    }
-
-   /**
-    * Abbreviate opcodes to save space for QR codes
-    */
-   private abbreviateOpcodes(compressed: string): string {
-     const abbreviations: Record<string, string> = {
-       'SET': 'S',
-       'PRINT': 'P',
-       'MATH': 'M',
-       'IF': 'I',
-       'JUMP': 'J',
-       'POINT': 'PT',
-       'LIST_CREATE': 'LC',
-       'LIST_PUSH': 'LP',
-       'LIST_GET': 'LG',
-       'LIST_SET': 'LS',
-       'LIST_SORT': 'LST',
-       'CALL': 'C',
-       'PROC': 'PR',
-       'RETURN': 'R',
-       'FOR': 'F',
-       'ENDFOR': 'EF',
-       'BREAK': 'B',
-       'STRUCT': 'ST',
-       'STRUCTEND': 'STE',
-       'STRUCT_GET': 'STG',
-       'STRUCT_SET': 'STS',
-       'INC': 'IN',
-       'DEC': 'DC',
-     };
-
-     let abbreviated = compressed;
-     const sortedKeys = Object.keys(abbreviations).sort((a, b) => b.length - a.length);
-
-     for (const opcode of sortedKeys) {
-       const abbr = abbreviations[opcode];
-       const regex = new RegExp(`\\b${opcode}\\b`, 'g');
-       abbreviated = abbreviated.replace(regex, abbr);
-     }
-
-     return abbreviated;
-   }
-
-   /**
-    * Expand abbreviated opcodes back to full form
-    */
-    private expandOpcodes(abbreviated: string): string {
-      const expansions: Record<string, string> = {
-        'S': 'SET',
-        'P': 'PRINT',
-        'M': 'MATH',
-        'I': 'IF',
-        'J': 'JUMP',
-        'PT': 'POINT',
-        'LC': 'LIST_CREATE',
-        'LP': 'LIST_PUSH',
-        'LG': 'LIST_GET',
-        'LS': 'LIST_SET',
-        'LST': 'LIST_SORT',
-        'C': 'CALL',
-        'PR': 'PROC',
-        'R': 'RETURN',
-        'F': 'FOR',
-        'EF': 'ENDFOR',
-        'B': 'BREAK',
-        'ST': 'STRUCT',
-        'STE': 'STRUCTEND',
-        'STG': 'STRUCT_GET',
-        'STS': 'STRUCT_SET',
-        'IN': 'INC',
-        'DC': 'DEC',
-      };
-
-      let expanded = abbreviated;
-      const sortedKeys = Object.keys(expansions).sort((a, b) => b.length - a.length);
-
-       for (const abbr of sortedKeys) {
-         const opcode = expansions[abbr];
-         const regex = new RegExp(`\\b${abbr}\\b`, 'g');
-         expanded = expanded.replace(regex, opcode);
-       }
-
-       return expanded;
-     }
-
-   /**
-    * Encode program code to QR-friendly format (base64)
-    */
-   public encodeForQR(code: string): string {
-     const compressed = this.compressCode(code);
-     const abbreviated = this.abbreviateOpcodes(compressed);
-     return Buffer.from(abbreviated).toString('base64');
-   }
-
-   /**
-    * Decode QR code data back to executable program
-    */
-   public decodeFromQR(qrData: string): string {
-     const decoded = Buffer.from(qrData, 'base64').toString('utf-8');
-     return this.expandOpcodes(decoded);
-   }
-
-   /**
-    * Decode QR data to compiled instructions (ready to execute with run())
-    */
-   public decodeQRToInstructions(qrData: string): CompiledInstruction[] {
-     const code = this.decodeFromQR(qrData);
-     return this.compile(code);
-   }
-
-   /**
-    * Get compression statistics for code
-    */
-   public getCompressionStats(originalCode: string): {
-     original: number;
-     compressed: number;
-     abbreviated: number;
-     base64: number;
-     compressionRatio: number;
-   } {
-     const compressed = this.compressCode(originalCode);
-     const abbreviated = this.abbreviateOpcodes(compressed);
-     const base64 = Buffer.from(abbreviated).toString('base64');
-
-     return {
-       original: originalCode.length,
-       compressed: compressed.length,
-       abbreviated: abbreviated.length,
-       base64: base64.length,
-       compressionRatio: (abbreviated.length / originalCode.length) * 100,
-     };
-   }
-
-   // ============ STRUCT SUPPORT ============
-
-   /**
-    * Get a struct definition by name
-    */
-   public getStructDefinition(name: string): StructDefinition | undefined {
-     return this.structDefinitions.get(name);
-   }
-
-   /**
-    * Create a new struct instance
-    */
-   public createStructInstance(structName: string): StructInstance {
-     const def = this.structDefinitions.get(structName);
-     if (!def) {
-       throw new Error(`Struct definition "${structName}" not found`);
-     }
-
-     const data = new Map<string, Variable>();
-     // Initialize all fields with default values based on type
-     for (const [fieldName, fieldDef] of def.fields.entries()) {
-       switch (fieldDef.type) {
-         case 'number':
-           data.set(fieldName, Num(0));
-           break;
-         case 'string':
-           data.set(fieldName, Str(''));
-           break;
-         case 'list':
-           data.set(fieldName, List([]));
-           break;
-       }
-     }
-
-     return {
-       structName,
-       data,
-     };
-   }
-
-   /**
-    * Get field from struct instance
-    */
-   public getStructField(instance: StructInstance, fieldName: string): Variable {
-     if (!instance.data.has(fieldName)) {
-       throw new Error(`Field "${fieldName}" not found in struct "${instance.structName}"`);
-     }
-     return instance.data.get(fieldName)!;
-   }
-
-   /**
-    * Set field in struct instance with type checking
-    */
-   public setStructField(instance: StructInstance, fieldName: string, value: Variable): void {
-     const def = this.structDefinitions.get(instance.structName);
-     if (!def) {
-       throw new Error(`Struct definition "${instance.structName}" not found`);
-     }
-
-     const fieldDef = def.fields.get(fieldName);
-     if (!fieldDef) {
-       throw new Error(`Field "${fieldName}" not defined in struct "${instance.structName}"`);
-     }
-
-     // Type checking
-     if (fieldDef.type === 'number' && value.type !== PanSparkType.Number) {
-       throw new Error(`Field "${fieldName}" expects number but got different type`);
-     }
-     if (fieldDef.type === 'string' && value.type !== PanSparkType.String) {
-       throw new Error(`Field "${fieldName}" expects string but got different type`);
-     }
-     if (fieldDef.type === 'list' && value.type !== PanSparkType.List) {
-       throw new Error(`Field "${fieldName}" expects list but got different type`);
-     }
-
-     instance.data.set(fieldName, value);
-   }
 }
 
-export function createVM(): PanSparkVM {
-  return new PanSparkVM();
+export function createVM(): CakeSparkVM {
+  return new CakeSparkVM();
 }

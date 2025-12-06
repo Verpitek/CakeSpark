@@ -1,4 +1,4 @@
-# PANSPARK SCRIPTING LANGUAGE MANUAL
+# CAKESPARK SCRIPTING LANGUAGE MANUAL
 
 ## A Retro Coding Adventure
 
@@ -6,13 +6,13 @@
 
 ---
 
-# PAGE 1: WELCOME TO PANSPARK
+# PAGE 1: WELCOME TO CAKESPARK
 
-Welcome, fellow programmer! You've just loaded one of the most straightforward scripting languages ever created. Whether you're 8 or 80, PanSpark speaks a language you can understand.
+Welcome, fellow programmer! You've just loaded one of the most straightforward scripting languages ever created. Whether you're 8 or 80, CakeSpark speaks a language you can understand.
 
-## What is PanSpark?
+## What is CakeSpark?
 
-PanSpark is a **tick-based interpreted OpCode scripting language** designed for predictable performance and ease of parsing. Think of it as giving a robot instructions—one command at a time, nice and clear.
+CakeSpark is a **tick-based interpreted OpCode scripting language** designed for predictable performance and ease of parsing. Think of it as giving a robot instructions—one command at a time, nice and clear.
 
 **Key Philosophy:**
 - **One operation per line** — Every line begins with an OpCode
@@ -21,9 +21,9 @@ PanSpark is a **tick-based interpreted OpCode scripting language** designed for 
 
 ## OpCodes - The Command System
 
-Every line of PanSpark code begins with an **OpCode** (Operation Code). An OpCode tells PanSpark what action to take:
+Every line of CakeSpark code begins with an **OpCode** (Operation Code). An OpCode tells CakeSpark what action to take:
 
-```panspark
+```cakespark
 SET 10 >> x        // SET is the OpCode
 PRINT x            // PRINT is the OpCode
 MATH x + 5 >> y    // MATH is the OpCode
@@ -44,21 +44,21 @@ Think of OpCodes as verbs that tell your program what to do. Each line must star
 
 ## The Three Types We Work With
 
-PanSpark has three main data types:
+CakeSpark has three main data types:
 
 | Type | What It Is | Example |
 |------|-----------|---------|
 | **Number** | Integers and decimals | `42`, `3.14`, `-100` |
-| **String** | Text | `"Hello World"`, `"PanSpark"` |
+| **String** | Text | `"Hello World"`, `"CakeSpark"` |
 | **List** | Multiple numbers together | `[1, 2, 3, 4, 5]` |
 
 ---
 
 # PAGE 2: YOUR FIRST PROGRAM
 
-Let's start simple. Here's the tiniest PanSpark program:
+Let's start simple. Here's the tiniest CakeSpark program:
 
-```panspark
+```cakespark
 PRINT "Hello, World!"
 ```
 
@@ -71,7 +71,7 @@ PRINT "Hello, World!"
 
 Let's try something with numbers:
 
-```panspark
+```cakespark
 SET 10 >> number1
 SET 20 >> number2
 MATH number1 + number2 >> result
@@ -94,7 +94,7 @@ Variables are like labeled storage boxes. You put things in them, label them wit
 
 ## Creating Variables with SET
 
-```panspark
+```cakespark
 SET 10 >> myNumber
 PRINT myNumber
 ```
@@ -103,7 +103,7 @@ This creates a box called `myNumber` and puts the number `10` in it.
 
 ## Quick Initialization
 
-```panspark
+```cakespark
 SET playerScore
 ```
 
@@ -111,7 +111,7 @@ Creates `playerScore` with value `0` (default).
 
 ## Copying Variables
 
-```panspark
+```cakespark
 SET 100 >> original
 SET original >> copy
 PRINT copy
@@ -119,7 +119,7 @@ PRINT copy
 
 ## Variable Names
 
-In PanSpark, variable names use camelCase (no underscores or dashes):
+In CakeSpark, variable names use camelCase (no underscores or dashes):
 - `health`, `damage`, `score` — Good!
 - `x1`, `y2`, `temp` — Also fine
 - `playerHealth`, `enemyDamage` — Perfect!
@@ -133,7 +133,7 @@ In PanSpark, variable names use camelCase (no underscores or dashes):
 
 ## Basic Operations
 
-```panspark
+```cakespark
 MATH 5 + 3 >> result
 PRINT result
 
@@ -155,7 +155,7 @@ PRINT result
 
 ## Using Variables
 
-```panspark
+```cakespark
 SET 10 >> health
 SET 5 >> damage
 MATH health - damage >> newHealth
@@ -166,7 +166,7 @@ PRINT newHealth
 
 Sometimes you just transform a single number:
 
-```panspark
+```cakespark
 MATH 16 sqrt >> root
 MATH 100 abs >> positive
 MATH 3.7 floor >> roundedDown
@@ -179,7 +179,7 @@ MATH -42 abs >> absolute
 
 You can chain operations:
 
-```panspark
+```cakespark
 MATH 2 + 3 * 4 >> result
 
 MATH 10 + 5 * 2 >> result
@@ -193,7 +193,7 @@ MATH 100 / 4 + 10 >> result
 
 ## Simple Printing
 
-```panspark
+```cakespark
 PRINT 42
 PRINT "Hello!"
 ```
@@ -202,14 +202,14 @@ PRINT automatically adds a newline after each output.
 
 ## Printing Variables
 
-```panspark
+```cakespark
 SET 100 >> score
 PRINT score
 ```
 
 ## Printing Lists
 
-```panspark
+```cakespark
 LIST_CREATE numbers
 LIST_PUSH 1 >> numbers
 LIST_PUSH 2 >> numbers
@@ -217,7 +217,7 @@ LIST_PUSH 3 >> numbers
 PRINT numbers
 ```
 
-> **INFO:** Each `PRINT` command outputs to a buffer on its own line. When your program finishes, you can read all outputs at once. That's how PanSpark displays things!
+> **INFO:** Each `PRINT` command outputs to a buffer on its own line. When your program finishes, you can read all outputs at once. That's how CakeSpark displays things!
 
 ---
 
@@ -227,7 +227,7 @@ PRINT numbers
 
 Use `POINT` to mark a location and `JUMP` to go there:
 
-```panspark
+```cakespark
 PRINT "Starting"
 JUMP skipThis
 PRINT "This won't show"
@@ -243,7 +243,7 @@ Done
 
 ## The IF Statement - Making Decisions
 
-```panspark
+```cakespark
 SET 10 >> number
 IF number > 5 >> bigNumber
 PRINT "Small"
@@ -267,7 +267,7 @@ POINT done
 
 ## The POINT/JUMP Loop
 
-```panspark
+```cakespark
 SET 0 >> counter
 POINT loopStart
 PRINT counter
@@ -288,7 +288,7 @@ Done!
 
 ## FOR Loop - The Easy Way
 
-```panspark
+```cakespark
 FOR i 0 5
   PRINT i
 ENDFOR
@@ -307,7 +307,7 @@ ENDFOR
 
 ## Breaking and Continuing
 
-```panspark
+```cakespark
 FOR i 0 10
   IF i == 5 >> skipMe
   PRINT i
@@ -327,7 +327,7 @@ ENDFOR
 
 Two shortcuts for common operations:
 
-```panspark
+```cakespark
 SET 10 >> counter
 INC counter
 PRINT counter
@@ -348,9 +348,9 @@ PRINT counter
 
 # PAGE 9: PROCEDURES - REUSABLE CODE
 
-Functions! Procedures! Subroutines! PanSpark calls them `PROC`:
+Functions! Procedures! Subroutines! CakeSpark calls them `PROC`:
 
-```panspark
+```cakespark
 PROC greet (name)
   PRINT "Hello, "
   PRINT name
@@ -370,7 +370,7 @@ Bob
 
 ## Procedures That Return Values
 
-```panspark
+```cakespark
 PROC double (x)
   MATH x * 2 >> result
   RETURN result
@@ -382,7 +382,7 @@ PRINT doubled
 
 ## Multiple Parameters
 
-```panspark
+```cakespark
 PROC add (a, b)
   MATH a + b >> sum
   RETURN sum
@@ -400,7 +400,7 @@ PRINT result
 
 ## The NOT Operator
 
-```panspark
+```cakespark
 SET 0 >> flag
 IF NOT flag >> isZero
 PRINT "Flag is not zero"
@@ -414,7 +414,7 @@ POINT done
 
 Both conditions must be true:
 
-```panspark
+```cakespark
 SET 10 >> x
 SET 20 >> y
 IF x < 15 AND y > 10 >> bothTrue
@@ -429,7 +429,7 @@ POINT end
 
 At least one condition must be true:
 
-```panspark
+```cakespark
 SET 5 >> health
 IF health == 0 OR health < 0 >> dead
 PRINT "Still alive!"
@@ -445,14 +445,14 @@ POINT end
 
 ## Creating Lists
 
-```panspark
+```cakespark
 LIST_CREATE myScores
 PRINT myScores
 ```
 
 ## Adding to Lists
 
-```panspark
+```cakespark
 LIST_CREATE numbers
 LIST_PUSH 10 >> numbers
 LIST_PUSH 20 >> numbers
@@ -462,7 +462,7 @@ PRINT numbers
 
 ## Getting From Lists
 
-```panspark
+```cakespark
 LIST_CREATE colorsCoded
 LIST_PUSH 255 >> colorsCoded
 LIST_PUSH 128 >> colorsCoded
@@ -480,7 +480,7 @@ PRINT redValue
 
 ## Sorting Lists
 
-```panspark
+```cakespark
 LIST_CREATE scores
 LIST_PUSH 50 >> scores
 LIST_PUSH 10 >> scores
@@ -495,7 +495,7 @@ PRINT scores
 
 ## List Length
 
-```panspark
+```cakespark
 LIST_CREATE items
 LIST_PUSH 1 >> items
 LIST_PUSH 2 >> items
@@ -506,7 +506,7 @@ PRINT count
 
 ## Finding Elements
 
-```panspark
+```cakespark
 LIST_CREATE searchList
 LIST_PUSH 10 >> searchList
 LIST_PUSH 20 >> searchList
@@ -521,7 +521,7 @@ PRINT found
 
 ## Removing From Lists
 
-```panspark
+```cakespark
 LIST_CREATE toRemove
 LIST_PUSH 1 >> toRemove
 LIST_PUSH 2 >> toRemove
@@ -534,84 +534,7 @@ PRINT toRemove
 
 ---
 
-# PAGE 13: STRING OPERATIONS
-
-## Working with Text
-
-```panspark
-SET "Hello" >> greeting
-PRINT greeting
-```
-
-## String Functions
-
-```panspark
-SET "hello" >> lower
-STR_UPPER lower >> upper
-PRINT upper
-
-SET "WORLD" >> upper
-STR_LOWER upper >> lower
-PRINT lower
-```
-
-## More String Operations
-
-```panspark
-SET "  spaces  " >> padded
-STR_TRIM padded >> trimmed
-PRINT trimmed
-
-SET "Hello World" >> original
-STR_REPLACE original "World" "PanSpark" >> modified
-PRINT modified
-
-STR_CONTAINS original "World" >> hasWorld
-PRINT hasWorld
-```
-
 ---
-
-# PAGE 14: ERROR HANDLING
-
-## The TRY-CATCH Block
-
-Sometimes things go wrong. Handle it gracefully:
-
-```panspark
-TRY errorMsg
-  MATH 10 / 0 >> oops
-CATCH
-  PRINT "Error caught!"
-  PRINT errorMsg
-ENDTRY
-```
-
-**Output:**
-```
-Error caught!
-Division by zero error: cannot divide 10 by 0
-```
-
-## Manual Errors
-
-You can throw your own errors:
-
-```panspark
-SET 5 >> age
-TRY ageError
-  IF age < 0 >> badAge
-  PRINT "Age is valid"
-  JUMP ageOk
-  POINT badAge
-  THROW "Age cannot be negative!"
-  POINT ageOk
-CATCH
-  PRINT ageError
-ENDTRY
-```
-
-> **INFO:** When an error happens inside a TRY block, it stores the error message in your variable and jumps to CATCH. No crash!
 
 ---
 
@@ -619,7 +542,7 @@ ENDTRY
 
 ## Looking at Your Variables
 
-```panspark
+```cakespark
 SET 10 >> x
 SET 20 >> y
 SET 30 >> z
@@ -637,38 +560,13 @@ DUMPING MEMORY at line 5
 END OF MEMORY DUMP
 ```
 
-## Memory Statistics
-
-```panspark
-SET 100 >> bigNumber
-SET "hello" >> text
-LIST_CREATE items
-
-MEMSTATS
-```
-
-Shows how much memory you're using.
-
-## Freeing Memory
-
-On systems with limited RAM, you can release variables:
-
-```panspark
-SET 1000000 >> bigTemp
-PRINT bigTemp
-FREE bigTemp
-PRINT "Memory freed!"
-```
-
-> **INFO:** `FREE` is optional on modern systems, but vital on old computers with limited memory (like actual C64s or embedded systems).
-
 ---
 
 # PAGE 16: TYPE CHECKING
 
 ## TYPEOF - Knowing What You Have
 
-```panspark
+```cakespark
 SET 42 >> number
 SET "hello" >> text
 LIST_CREATE items
@@ -692,7 +590,7 @@ Perfect for debugging or handling mixed data.
 
 Every instruction is one "tick". You can check how many have passed:
 
-```panspark
+```cakespark
 TICK startTick
 PRINT startTick
 
@@ -706,7 +604,7 @@ PRINT elapsed
 
 ## WAIT - Pause Execution
 
-```panspark
+```cakespark
 PRINT "Starting"
 WAIT 1000
 PRINT "Done waiting"
@@ -721,43 +619,44 @@ PRINT "Done waiting"
 ### DO:
 
 1. **Initialize before using:**
-   ```panspark
+   ```cakespark
    SET 0 >> score
    ```
 
 2. **Use clear camelCase names:**
-   ```panspark
+   ```cakespark
    SET 100 >> playerHealth
    ```
 
-3. **Free memory when done (if limited):**
-   ```panspark
-   SET hugeTemporaryValue >> temp
-   PRINT temp
-   FREE temp
-   ```
-
-4. **Comment complex sections:**
-   ```panspark
+3. **Comment complex sections:**
+   ```cakespark
    // Calculate player's next action based on AI
    IF enemyHealth < 50 >> flee
    ```
 
-5. **Validate bounds for lists:**
-   ```panspark
+4. **Validate bounds for lists:**
+   ```cakespark
    LIST_LENGTH myList >> len
    IF index < len >> valid
+   ```
+
+5. **Use procedures to organize code:**
+   ```cakespark
+   PROC calculateDamage (base, modifier)
+     MATH base * modifier >> result
+     RETURN result
+   ENDPROC
    ```
 
 ### DON'T:
 
 1. **Use undefined variables:**
-   ```panspark
+   ```cakespark
    PRINT undefinedVar
    ```
 
 2. **Jump outside procedures:**
-   ```panspark
+   ```cakespark
    PROC myProc
      JUMP outside
    ENDPROC
@@ -765,12 +664,12 @@ PRINT "Done waiting"
    ```
 
 3. **Divide by zero:**
-   ```panspark
+   ```cakespark
    MATH 10 / 0 >> result
    ```
 
 4. **Access invalid list indices:**
-   ```panspark
+   ```cakespark
    LIST_CREATE list
    LIST_PUSH 1 >> list
    LIST_GET list 5 >> value
@@ -782,7 +681,7 @@ PRINT "Done waiting"
 
 ## Pattern 1: Counter Loop
 
-```panspark
+```cakespark
 SET 0 >> i
 POINT loop
 PRINT i
@@ -792,7 +691,7 @@ IF i < 10 >> loop
 
 ## Pattern 2: Accumulator
 
-```panspark
+```cakespark
 SET 0 >> total
 FOR i 1 10
   MATH total + i >> total
@@ -802,7 +701,7 @@ PRINT total
 
 ## Pattern 3: Nested Loops
 
-```panspark
+```cakespark
 FOR row 0 3
   FOR col 0 3
     PRINT "."
@@ -810,15 +709,16 @@ FOR row 0 3
 ENDFOR
 ```
 
-## Pattern 4: Safe Division
+## Pattern 4: Conditional Math
 
-```panspark
+```cakespark
 SET 0 >> divisor
-TRY error
-  MATH 100 / divisor >> result
-CATCH
-  SET -1 >> result
-ENDTRY
+IF divisor == 0 >> skipDiv
+MATH 100 / divisor >> result
+JUMP doneDiv
+POINT skipDiv
+SET -1 >> result
+POINT doneDiv
 PRINT result
 ```
 
@@ -829,12 +729,12 @@ PRINT result
 ### Finding Problems
 
 1. **Use MEMDUMP to see what's stored:**
-   ```panspark
+   ```cakespark
    MEMDUMP
    ```
 
 2. **Print intermediate values:**
-   ```panspark
+   ```cakespark
    SET 10 >> x
    SET 20 >> y
    PRINT x
@@ -843,13 +743,13 @@ PRINT result
    ```
 
 3. **Use TYPEOF to verify types:**
-   ```panspark
+   ```cakespark
    TYPEOF suspectVar >> type
    PRINT type
    ```
 
 4. **Trace your jumps:**
-   ```panspark
+   ```cakespark
    PRINT "Before jump"
    JUMP target
    PRINT "Never printed"
@@ -858,7 +758,7 @@ PRINT result
    ```
 
 5. **Test procedures in isolation:**
-   ```panspark
+   ```cakespark
    PROC brokenThing (x)
      PRINT x
      MATH x * 2 >> result
@@ -873,7 +773,7 @@ PRINT result
 
 # PAGE 21: COMPLETE EXAMPLE - GUESS THE NUMBER
 
-```panspark
+```cakespark
 PROC getGuess (min, max)
   SET 42 >> guess
   RETURN guess
@@ -916,7 +816,7 @@ PRINT "Game over!"
 
 ## Recursive Procedures
 
-```panspark
+```cakespark
 PROC factorial (n)
   IF n <= 1 >> base
   MATH n - 1 >> nMinus1
@@ -934,7 +834,7 @@ PRINT result
 
 ## State Machines
 
-```panspark
+```cakespark
 SET 0 >> state
 
 POINT stateMachine
@@ -979,9 +879,8 @@ PRINT "Complete!"
 | LIST_PUSH | Add to list | `LIST_PUSH 10 >> items` |
 | LIST_GET | Get from list | `LIST_GET items 0 >> first` |
 | LIST_SORT | Sort list | `LIST_SORT items min` |
-| FREE | Delete variable | `FREE temp` |
-| TRY...CATCH | Error handling | `TRY error` |
 | MEMDUMP | Show memory | `MEMDUMP` |
+| TYPEOF | Check type | `TYPEOF var >> type` |
 
 ---
 
@@ -1027,29 +926,29 @@ PRINT "Complete!"
 
 ### "Variable is not defined"
 **Problem:** You used a variable before creating it.
-```panspark
+```cakespark
 PRINT undefined
 ```
 **Solution:** Always SET first.
-```panspark
+```cakespark
 SET 0 >> variable
 PRINT variable
 ```
 
 ### "Jump target not found"
 **Problem:** You jumped to a POINT that doesn't exist.
-```panspark
+```cakespark
 JUMP missingLabel
 ```
 **Solution:** Define the POINT first.
-```panspark
+```cakespark
 POINT missingLabel
 PRINT "Found it!"
 ```
 
 ### "Out of bounds"
 **Problem:** You accessed a list index that doesn't exist.
-```panspark
+```cakespark
 LIST_CREATE items
 LIST_PUSH 1 >> items
 LIST_GET items 5 >> value
@@ -1058,7 +957,7 @@ LIST_GET items 5 >> value
 
 ### "Type mismatch"
 **Problem:** You used the wrong type of data.
-```panspark
+```cakespark
 LIST_CREATE items
 MATH items + 5 >> result
 ```
@@ -1066,28 +965,11 @@ MATH items + 5 >> result
 
 ---
 
-# PAGE 27: MEMORY MANAGEMENT ON LIMITED SYSTEMS
-
-If you're running on a C64, old embedded system, or memory-constrained device:
-
-### Check Your Memory
-
-```panspark
-MEMSTATS
-```
-
-### Be Aggressive with FREE
-
-```panspark
-SET 1000000 >> temporary
-PRINT temporary
-FREE temporary
-PRINT "Memory freed!"
-```
+# PAGE 27: MEMORY MANAGEMENT
 
 ### Use Lists Wisely
 
-```panspark
+```cakespark
 LIST_CREATE hugeList
 FOR i 0 10000
   LIST_PUSH i >> hugeList
@@ -1098,7 +980,7 @@ Consider alternatives like processing and discarding instead of storing everythi
 
 ### Reuse Variables
 
-```panspark
+```cakespark
 SET 0 >> value
 POINT loop
   MATH value + 1 >> value
@@ -1111,17 +993,17 @@ SET 0 >> value
 
 # PAGE 28: PERFORMANCE TIPS
 
-PanSpark is FAST, but here are ways to make it faster:
+CakeSpark is FAST, but here are ways to make it faster:
 
 ### 1. Use FOR loops instead of POINT/JUMP
-```panspark
+```cakespark
 FOR i 0 1000
   PRINT i
 ENDFOR
 ```
 
 ### 2. Use procedures for repeated code
-```panspark
+```cakespark
 PROC calculateDamage (base, modifier)
   MATH base * modifier >> result
   RETURN result
@@ -1132,7 +1014,7 @@ CALL calculateDamage (15, 3) >> dmg2
 ```
 
 ### 3. Minimize nested loops
-```panspark
+```cakespark
 FOR i 0 100
   FOR j 0 100
   ENDFOR
@@ -1143,7 +1025,7 @@ ENDFOR
 
 # PAGE 29: REAL-WORLD EXAMPLE - INVENTORY SYSTEM
 
-```panspark
+```cakespark
 LIST_CREATE inventory
 SET 0 >> gold
 
@@ -1175,14 +1057,14 @@ CALL showInventory ()
 
 # PAGE 30: FINAL WORDS
 
-### Welcome to the PanSpark Community
+### Welcome to the CakeSpark Community
 
 You've now got the knowledge to:
 - Create variables and do math
 - Make decisions with IF statements
 - Loop and repeat
 - Build procedures with PROC
-- Handle errors gracefully
+- Work with lists and data structures
 - Manage memory
 - Debug when things go wrong
 
@@ -1202,7 +1084,7 @@ You've now got the knowledge to:
 
 ---
 
-**You are now a PanSpark programmer!**
+**You are now a CakeSpark programmer!**
 
 May your variables be defined and your loops fast.
 
@@ -1211,7 +1093,7 @@ May your variables be defined and your loops fast.
 ---
 
 **Last Updated:** November 2025
-**PanSpark Version:** Latest
+**CakeSpark Version:** Latest
 **Manual Style:** Beginner-friendly, retro-inspired
 **Target Audience:** Everyone from kids to experienced programmers
 

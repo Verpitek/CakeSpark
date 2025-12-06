@@ -1,4 +1,4 @@
-import { PanSparkVM } from "./panspark";
+import { CakeSparkVM } from "./cakespark";
 
 interface TestResult {
   name: string;
@@ -21,7 +21,7 @@ function runTest(name: string, testFn: () => void): void {
 }
 
 function runCode(code: string): string[] {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const program = vm.run(vm.compile(code));
   while (program.next().done === false) {}
   return vm.buffer;
@@ -238,7 +238,7 @@ runTest("MATH - Log (natural logarithm)", () => {
     MATH 2.718281828 log >> result
     PRINT result
   `;
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const program = vm.run(vm.compile(code));
   while (program.next().done === false) {}
   const output = parseFloat(vm.buffer[0]);
@@ -671,27 +671,6 @@ runTest("LIST_SET - Out of bounds throws error", () => {
 // ==================== MEMORY OPERATIONS ====================
 console.log("\n=== MEMORY OPERATIONS ===\n");
 
-runTest("FREE - Remove variable from memory", () => {
-  const code = `
-    SET 42 >> temp
-    PRINT temp
-    FREE temp
-    PRINT "Variable freed"
-  `;
-  expectOutput(code, ["42", "Variable freed"]);
-});
-
-runTest("FREE - Freed variable becomes undefined when referenced", () => {
-   const code = `
-     SET 42 >> temp
-     FREE temp
-     SET temp >> result
-     PRINT result
-   `;
-   // After FREE, temp is not in memory, so SET treats it as a string literal
-   expectOutput(code, ["temp"]);
-});
-
 runTest("MEMDUMP - Display memory state", () => {
   const code = `
     SET 10 >> x
@@ -709,7 +688,7 @@ runTest("TICK - Get instruction counter", () => {
     TICK counter
     PRINT counter
   `;
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const program = vm.run(vm.compile(code));
   while (program.next().done === false) {}
   const tick = parseInt(vm.buffer[0]);
@@ -732,7 +711,7 @@ runTest("NOP - No operation", () => {
 console.log("\n=== STATE PERSISTENCE ===\n");
 
 runTest("State - Save and restore basic state", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const code = `
     SET 42 >> x
     SET 100 >> y
@@ -757,7 +736,7 @@ runTest("State - Save and restore basic state", () => {
   }
   
   // Restore to new VM
-  const vm2 = new PanSparkVM();
+  const vm2 = new CakeSparkVM();
   const restoredInstructions = vm2.loadState(savedState);
   
   if (!restoredInstructions) {
@@ -771,7 +750,7 @@ runTest("State - Save and restore basic state", () => {
 });
 
 runTest("State - Save preserves variables", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const code = `
     SET 42 >> answer
     SET "hello" >> message
@@ -786,7 +765,7 @@ runTest("State - Save preserves variables", () => {
   const savedState = vm.saveState(instructions);
   
   // Restore
-  const vm2 = new PanSparkVM();
+  const vm2 = new CakeSparkVM();
   vm2.loadState(savedState);
   
   const vars1 = vm.getVariableMemory();
@@ -798,7 +777,7 @@ runTest("State - Save preserves variables", () => {
 });
 
 runTest("State - Resume execution from saved state", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const code = `
     SET 0 >> i
     POINT loop_start
@@ -818,7 +797,7 @@ runTest("State - Resume execution from saved state", () => {
   const savedState = vm.saveState(instructions);
   
   // Restore and continue
-  const vm2 = new PanSparkVM();
+  const vm2 = new CakeSparkVM();
   const restoredInstructions = vm2.loadState(savedState)!;
   const gen2 = vm2.run(restoredInstructions);
   
@@ -831,7 +810,7 @@ runTest("State - Resume execution from saved state", () => {
 });
 
 runTest("State - Save with procedures", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const code = `
     PROC add (a, b)
       MATH a + b >> result
@@ -851,7 +830,7 @@ runTest("State - Save with procedures", () => {
   const savedState = vm.saveState(instructions);
   
   // Restore
-  const vm2 = new PanSparkVM();
+  const vm2 = new CakeSparkVM();
   const restoredInstructions = vm2.loadState(savedState)!;
   
   // Continue execution
@@ -862,7 +841,7 @@ runTest("State - Save with procedures", () => {
 });
 
 runTest("State - Character limit validation", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   
   // Create a huge buffer to exceed limit
   vm.buffer = new Array(35000).fill("x");
@@ -879,7 +858,7 @@ runTest("State - Character limit validation", () => {
 });
 
 runTest("State - Save without instructions (smaller size)", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const code = `
     SET 42 >> x
     SET 100 >> y
@@ -900,7 +879,7 @@ runTest("State - Save without instructions (smaller size)", () => {
 });
 
 runTest("State - Load returns null when no instructions saved", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const code = `SET 42 >> x`;
   const instructions = vm.compile(code);
   const gen = vm.run(instructions);
@@ -910,7 +889,7 @@ runTest("State - Load returns null when no instructions saved", () => {
   const savedState = vm.saveState();
   
   // Load
-  const vm2 = new PanSparkVM();
+  const vm2 = new CakeSparkVM();
   const restoredInstructions = vm2.loadState(savedState);
   
   if (restoredInstructions !== null) {
@@ -919,7 +898,7 @@ runTest("State - Load returns null when no instructions saved", () => {
 });
 
 runTest("State - Restore state with FOR loops", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const code = `
     FOR i 0 2
       PRINT i
@@ -936,7 +915,7 @@ runTest("State - Restore state with FOR loops", () => {
   const savedState = vm.saveState(instructions);
   
   // Restore
-  const vm2 = new PanSparkVM();
+  const vm2 = new CakeSparkVM();
   const restoredInstructions = vm2.loadState(savedState)!;
   const gen2 = vm2.run(restoredInstructions);
   
@@ -949,7 +928,7 @@ runTest("State - Restore state with FOR loops", () => {
 });
 
 runTest("State - UUID preserved after restore", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   const originalUUID = vm.uuid;
   
   const code = `SET 42 >> x`;
@@ -960,7 +939,7 @@ runTest("State - UUID preserved after restore", () => {
   const savedState = vm.saveState(instructions);
   
   // Restore
-  const vm2 = new PanSparkVM();
+  const vm2 = new CakeSparkVM();
   vm2.loadState(savedState);
   
   if (vm2.uuid !== originalUUID) {
@@ -971,7 +950,7 @@ runTest("State - UUID preserved after restore", () => {
 });
 
 runTest("State - Corrupted state throws error", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   
   try {
     vm.loadState("invalid json");
@@ -985,7 +964,7 @@ runTest("State - Corrupted state throws error", () => {
 });
 
 runTest("State - Large state at exactly 32767 characters", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   
   // Create state that's close to limit
   const code = `SET 42 >> x`;
@@ -1001,7 +980,7 @@ runTest("State - Large state at exactly 32767 characters", () => {
   }
   
   // Should be able to restore
-  const vm2 = new PanSparkVM();
+  const vm2 = new CakeSparkVM();
   const restoredInstructions = vm2.loadState(savedState);
   
   if (!restoredInstructions) {
@@ -1019,7 +998,7 @@ runTest("Undefined variable treated as string literal in PRINT", () => {
    const code = `
      PRINT undefined_var
    `;
-   // In PanSpark, undefined identifiers become string literals
+   // In CakeSpark, undefined identifiers become string literals
    expectOutput(code, ["undefined_var"]);
 });
 
@@ -1050,84 +1029,6 @@ runTest("END - Terminate program", () => {
   expectOutput(code, ["Start"]);
 });
 
-// ==================== STRING OPERATIONS ====================
-console.log("\n=== STRING OPERATIONS ===\n");
-
-runTest("CONCAT - Basic string concatenation", () => {
-  const code = `
-    SET "Hello" >> str1
-    SET " World" >> str2
-    CONCAT str1 str2 >> result
-    PRINT result
-  `;
-  expectOutput(code, ["Hello World"]);
-});
-
-runTest("CONCAT - Number to string conversion", () => {
-  const code = `
-    SET 42 >> num
-    SET "!" >> exclamation
-    CONCAT num exclamation >> result
-    PRINT result
-  `;
-  expectOutput(code, ["42!"]);
-});
-
-runTest("STRLEN - String length", () => {
-  const code = `
-    SET "Hello" >> str
-    STRLEN str >> len
-    PRINT len
-  `;
-  expectOutput(code, ["5"]);
-});
-
-runTest("STRLEN - Empty string", () => {
-  const code = `
-    SET "" >> empty
-    STRLEN empty >> len
-    PRINT len
-  `;
-  expectOutput(code, ["0"]);
-});
-
-runTest("STRLEN - Number length", () => {
-  const code = `
-    SET 12345 >> num
-    STRLEN num >> len
-    PRINT len
-  `;
-  expectOutput(code, ["5"]);
-});
-
-runTest("SUBSTR - Substring extraction", () => {
-  const code = `
-    SET "Hello World" >> str
-    SUBSTR str 0 5 >> result
-    PRINT result
-  `;
-  expectOutput(code, ["Hello"]);
-});
-
-runTest("SUBSTR - Middle substring", () => {
-  const code = `
-    SET "JavaScript" >> str
-    SUBSTR str 4 10 >> result
-    PRINT result
-  `;
-  expectOutput(code, ["Script"]);
-});
-
-runTest("SUBSTR - Full string", () => {
-  const code = `
-    SET "Test" >> str
-    SUBSTR str 0 4 >> result
-    PRINT result
-  `;
-  expectOutput(code, ["Test"]);
-});
-
-// ==================== STRING ESCAPE SEQUENCES ====================
 console.log("\n=== STRING ESCAPE SEQUENCES ===\n");
 
 runTest("String escape - Newline character", () => {
@@ -1261,7 +1162,7 @@ runTest("Variable limit - Allow unlimited variables by default", () => {
 });
 
 runTest("Variable limit - Enforce variable count restriction", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   vm.setMaxVariableCount(2);
   const code = `
     SET 1 >> a
@@ -1283,7 +1184,7 @@ runTest("Variable limit - Enforce variable count restriction", () => {
 });
 
 runTest("Variable limit - Allow overwriting existing variables", () => {
-  const vm = new PanSparkVM();
+  const vm = new CakeSparkVM();
   vm.setMaxVariableCount(2);
   const code = `
     SET 1 >> a
@@ -1388,51 +1289,6 @@ runTest("AST - Multiple unary operators", () => {
   expectOutput(code, ["5"]);
 });
 
-runTest("MEMSTATS - Basic memory statistics", () => {
-  const code = `
-    SET 10 >> x
-    SET 20 >> y
-    SET "hello" >> greeting
-    MEMSTATS
-  `;
-  const output = runCode(code);
-  const fullOutput = output.join("\n");
-  if (!fullOutput.includes("Global Variables: 3")) {
-    throw new Error(`Expected "Global Variables: 3" in output, got: ${JSON.stringify(output)}`);
-  }
-});
-
-runTest("MEMSTATS - Store stats in variable", () => {
-  const code = `
-    SET 10 >> x
-    SET 20 >> y
-    MEMSTATS >> stats
-    PRINT stats
-  `;
-  const output = runCode(code);
-  if (!output[0].includes("STATS:")) {
-    throw new Error(`Expected stats string starting with "STATS:", got: ${output[0]}`);
-  }
-  if (!output[0].includes("GlobalVars=2")) {
-    throw new Error(`Expected "GlobalVars=2" in stats, got: ${output[0]}`);
-  }
-});
-
-runTest("MEMSTATS - With variable limit", () => {
-  const code = `
-    SET 10 >> x
-    MEMSTATS
-  `;
-  const vm = new PanSparkVM();
-  vm.setMaxVariableCount(5);
-  const program = vm.run(vm.compile(code));
-  while (program.next().done === false) {}
-  const fullOutput = vm.buffer.join("\n");
-  if (!fullOutput.includes("Variable Limit: 5")) {
-    throw new Error(`Expected "Variable Limit: 5" in output, got: ${JSON.stringify(vm.buffer)}`);
-  }
-});
-
 runTest("Inline comments - Basic inline comment", () => {
   const code = `
     SET 10 >> x  // This is a comment
@@ -1503,73 +1359,6 @@ runTest("TYPEOF - Check undefined variable", () => {
    expectOutput(code, ["undefined"]);
 });
 
-// ==================== STRING FUNCTIONS ====================
-console.log("\n=== STRING FUNCTIONS ===\n");
-
-runTest("STR_UPPER - Convert to uppercase", () => {
-   const code = `
-     SET hello >> str
-     STR_UPPER str >> upper
-     PRINT upper
-   `;
-   expectOutput(code, ["HELLO"]);
-});
-
-runTest("STR_LOWER - Convert to lowercase", () => {
-   const code = `
-     SET WORLD >> str
-     STR_LOWER str >> lower
-     PRINT lower
-   `;
-   expectOutput(code, ["world"]);
-});
-
-runTest("STR_TRIM - Remove whitespace", () => {
-   const code = `
-     SET "  hello  " >> str
-     STR_TRIM str >> trimmed
-     PRINT trimmed
-   `;
-   expectOutput(code, ["hello"]);
-});
-
-runTest("STR_REPLACE - Replace text", () => {
-   const code = `
-     SET "hello world" >> str
-     STR_REPLACE str "world" "universe" >> replaced
-     PRINT replaced
-   `;
-   expectOutput(code, ["hello universe"]);
-});
-
-runTest("STR_CONTAINS - Check if contains substring (true)", () => {
-   const code = `
-     SET "hello world" >> str
-     STR_CONTAINS str "world" >> found
-     PRINT found
-   `;
-   expectOutput(code, ["1"]);
-});
-
-runTest("STR_CONTAINS - Check if contains substring (false)", () => {
-   const code = `
-     SET "hello world" >> str
-     STR_CONTAINS str "xyz" >> found
-     PRINT found
-   `;
-   expectOutput(code, ["0"]);
-});
-
-runTest("STR_CHAR - Get character at index", () => {
-   const code = `
-     SET "hello" >> str
-     STR_CHAR str 1 >> char
-     PRINT char
-   `;
-   expectOutput(code, ["e"]);
-});
-
-// ==================== LOGICAL OPERATORS (AND, OR, NOT) ====================
 console.log("\n=== LOGICAL OPERATORS ===\n");
 
 runTest("IF with AND - Both true", () => {
@@ -1727,287 +1516,6 @@ runTest("LIST_REMOVE - Remove element from list", () => {
      PRINT len
    `;
    expectOutput(code, ["20", "2"]);
-});
-
-// ==================== TRY-CATCH ERROR HANDLING ====================
-console.log("\n=== TRY-CATCH ERROR HANDLING ===\n");
-
-runTest("TRY-CATCH - Catch division by zero", () => {
-   const code = `
-      TRY err
-        MATH 10 / 0 >> result
-        PRINT "Should not reach here"
-      CATCH
-        PRINT err
-      ENDTRY
-   `;
-   expectOutputContains(code, "Division by zero");
-});
-
-runTest("TRY-CATCH - No error, skip catch", () => {
-   const code = `
-      TRY err
-        MATH 10 + 5 >> result
-        PRINT "Success"
-      CATCH
-        PRINT "Should not reach here"
-      ENDTRY
-   `;
-   expectOutput(code, ["Success"]);
-});
-
-runTest("TRY-CATCH - Throw custom error", () => {
-   const code = `
-      TRY err
-        THROW "Custom error message"
-      CATCH
-        PRINT err
-      ENDTRY
-   `;
-   expectOutput(code, ["Custom error message"]);
-});
-
-runTest("TRY-CATCH - Undefined variable treated as string literal", () => {
-   const code = `
-      TRY err
-        PRINT undefined_variable
-      CATCH
-        PRINT "Caught error"
-      ENDTRY
-   `;
-   // undefined_variable is a string literal in PanSpark
-   expectOutput(code, ["undefined_variable"]);
-});
-
-runTest("TRY-CATCH - Nested try blocks", () => {
-   const code = `
-      TRY outer_err
-        TRY inner_err
-          THROW "Inner error"
-        CATCH
-          PRINT "Inner catch"
-        ENDTRY
-        PRINT "After inner try"
-      CATCH
-        PRINT "Outer catch"
-      ENDTRY
-   `;
-   expectOutput(code, ["Inner catch", "After inner try"]);
-});
-
-// ==================== STRUCT OPERATIONS ====================
-console.log("\n=== STRUCT OPERATIONS ===\n");
-
-runTest("STRUCT - Define and create struct", () => {
-   const code = `
-      STRUCT Point
-      x: number
-      y: number
-      STRUCTEND
-
-      SET Point >> p
-      PRINT "Struct created"
-   `;
-   expectOutput(code, ["Struct created"]);
-});
-
-runTest("STRUCT - Set and get fields", () => {
-   const code = `
-      STRUCT Point
-      x: number
-      y: number
-      STRUCTEND
-
-      SET Point >> p
-      STRUCT_SET p.x 100
-      STRUCT_SET p.y 200
-      STRUCT_GET p.x >> x
-      STRUCT_GET p.y >> y
-      PRINT x
-      PRINT y
-   `;
-   expectOutput(code, ["100", "200"]);
-});
-
-runTest("STRUCT - Multiple struct types", () => {
-   const code = `
-      STRUCT Point
-      x: number
-      y: number
-      STRUCTEND
-
-      STRUCT Color
-      r: number
-      g: number
-      b: number
-      STRUCTEND
-
-      SET Point >> p
-      SET Color >> c
-
-      STRUCT_SET p.x 10
-      STRUCT_SET c.r 255
-
-      STRUCT_GET p.x >> px
-      STRUCT_GET c.r >> cr
-      PRINT px
-      PRINT cr
-   `;
-   expectOutput(code, ["10", "255"]);
-});
-
-runTest("STRUCT - Field type validation", () => {
-   const code = `
-      STRUCT Data
-      value: number
-      STRUCTEND
-
-      SET Data >> d
-      STRUCT_SET d.value "not a number"
-   `;
-   expectError(code, /type|expects/i);
-});
-
-runTest("STRUCT - Field auto-initialization", () => {
-   const code = `
-      STRUCT Point
-      x: number
-      y: number
-      STRUCTEND
-
-      SET Point >> p
-      STRUCT_GET p.x >> x
-      STRUCT_GET p.y >> y
-      PRINT x
-      PRINT y
-   `;
-   expectOutput(code, ["0", "0"]);
-});
-
-runTest("STRUCT - String field", () => {
-   const code = `
-      STRUCT Person
-      name: string
-      age: number
-      STRUCTEND
-
-      SET Person >> person
-      STRUCT_SET person.name "Alice"
-      STRUCT_SET person.age 30
-      STRUCT_GET person.name >> n
-      STRUCT_GET person.age >> a
-      PRINT n
-      PRINT a
-   `;
-   expectOutput(code, ["Alice", "30"]);
-});
-
-runTest("STRUCT - List field", () => {
-   const code = `
-      STRUCT Data
-      values: list
-      STRUCTEND
-
-      SET Data >> d
-      LIST_CREATE temp
-      LIST_PUSH 1 >> temp
-      LIST_PUSH 2 >> temp
-      LIST_PUSH 3 >> temp
-      STRUCT_SET d.values temp
-      STRUCT_GET d.values >> v
-      LIST_GET v 1 >> second
-      PRINT second
-   `;
-   expectOutput(code, ["2"]);
-});
-
-// ==================== QR CODE OPERATIONS ====================
-console.log("\n=== QR CODE OPERATIONS ===\n");
-
-runTest("QR - Encode program code", () => {
-   const vm = new PanSparkVM();
-   const code = "SET 10 >> x PRINT x";
-   const encoded = vm.encodeForQR(code);
-   
-   if (encoded.length === 0) {
-      throw new Error("Encoded QR data is empty");
-   }
-   if (typeof encoded !== 'string') {
-      throw new Error("Encoded QR data should be a string");
-   }
-});
-
-runTest("QR - Decode QR data", () => {
-   const vm = new PanSparkVM();
-   const original = "SET 10 >> x PRINT x";
-   const encoded = vm.encodeForQR(original);
-   const decoded = vm.decodeFromQR(encoded);
-   
-   if (decoded.length === 0) {
-      throw new Error("Decoded code is empty");
-   }
-});
-
-runTest("QR - Round-trip encode/decode", () => {
-   const vm = new PanSparkVM();
-   const original = "SET 42 >> answer PRINT answer";
-   const encoded = vm.encodeForQR(original);
-   const decoded = vm.decodeFromQR(encoded);
-   
-   // Decode should produce code that compiles
-   const instructions = vm.compile(decoded);
-   if (instructions.length === 0) {
-      throw new Error("Decoded code did not compile to instructions");
-   }
-});
-
-runTest("QR - Execute decoded code", () => {
-   const vm = new PanSparkVM();
-   const code = `SET 10 >> x
-SET 20 >> y
-MATH x + y >> sum
-PRINT sum`;
-   const encoded = vm.encodeForQR(code);
-   const decoded = vm.decodeFromQR(encoded);
-   const instructions = vm.compile(decoded);
-   const program = vm.run(instructions);
-   
-   while (program.next().done === false) {}
-   
-   if (vm.buffer[0] !== "30") {
-      throw new Error(`Expected "30" but got "${vm.buffer[0]}"`);
-   }
-});
-
-runTest("QR - Compression reduces size", () => {
-   const vm = new PanSparkVM();
-   const code = `
-      SET 10 >> x
-      SET 20 >> y
-      SET 30 >> z
-      PRINT x
-      PRINT y
-      PRINT z
-   `;
-   const stats = vm.getCompressionStats(code);
-   
-   if (stats.abbreviated >= stats.original) {
-      throw new Error(`Compression failed: ${stats.abbreviated} >= ${stats.original}`);
-   }
-});
-
-runTest("QR - decodeQRToInstructions returns compiled instructions", () => {
-   const vm = new PanSparkVM();
-   const code = "SET 10 >> x PRINT x";
-   const encoded = vm.encodeForQR(code);
-   const instructions = vm.decodeQRToInstructions(encoded);
-   
-   if (!Array.isArray(instructions)) {
-      throw new Error("decodeQRToInstructions should return an array");
-   }
-   if (instructions.length === 0) {
-      throw new Error("Should return compiled instructions");
-   }
 });
 
 // ==================== RESULTS SUMMARY ====================
