@@ -1,4 +1,4 @@
-name: Build and Release PanSpark
+name: Build and Release CakeSpark
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
           bun-version: latest
 
       - name: Build project
-        run: bun build panspark.ts --outdir dist --minify
+        run: bun build cakepark.ts --outdir dist --minify
 
       - name: Get version number
         id: get_version
@@ -36,7 +36,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
-          name: "PanSpark v${{ steps.get_version.outputs.version }}"
+          name: "CakeSpark v${{ steps.get_version.outputs.version }}"
           body: "Automated release of PanSpark."
           files: |
             dist/panspark.js
