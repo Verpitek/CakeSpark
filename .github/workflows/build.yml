@@ -23,7 +23,7 @@ jobs:
           bun-version: latest
 
       - name: Build project
-        run: bun build cakepark.ts --outdir dist --minify
+        run: bun build cakespark.ts --outdir dist --minify
 
       - name: Get version number
         id: get_version
