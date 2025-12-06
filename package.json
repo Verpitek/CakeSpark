@@ -1,6 +1,6 @@
 {
   "name": "cakespark",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "CakeSpark scripting language runtime",
   "main": "build/cakespark.js",
   "type": "module",
