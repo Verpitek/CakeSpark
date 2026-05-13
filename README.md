@@ -1,157 +1,205 @@
-<img src="http://dev.verpitek.com:3000/_app/immutable/assets/favicon.CBf7ROhx.png" width=256>
 # CakeSpark
 
-A tick-based interpreted OpCode scripting language designed for predictable performance and ease of parsing.
+Sandboxed scripting language VM — version 1.0.0
 
-![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
-![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?logo=typescript&logoColor=white)
-![Status](https://img.shields.io/badge/status-active-success.svg)
-
-## Features
-
-- **One Operation Per Line**: Predictable execution model with strict syntax
-- **High Performance**: Pre-compiled instructions and optimized execution
-- **Extensible**: Easy-to-create custom OpCodes via module system
-- **Built-in Types**: Numbers, Strings, and Lists with comprehensive operations
-- **Procedures**: Isolated memory scopes with parameter passing and return values
-- **List Operations**: Create, manipulate, and sort lists of numbers
-- **Type Introspection**: Check variable types at runtime with `TYPEOF`
-- **Debugging**: Memory dumps, statistics, and execution ticks
-
-## Getting Started
-
-### Basic Usage
-
-```typescript
-import { CakeSparkVM } from "./cakespark";
-
-const vm1 = new CakeSparkVM();
-
-let code: string = `
-SET 10 >> num1
-SET 20 >> num2
-SET result
-MATH num1 + num2 >> result
-PRINT result`;
-
-const program1 = vm1.run(vm1.compile(code));
-
-while (program1.next().done === false) {
-}
-
-for (let line of vm1.buffer) {
-  console.log(line);
-}
-```
-
-## Language Overview
-
-CakeSpark uses a simple, readable syntax where each line performs exactly one operation:
-
-```cakespark
-// Variables
-SET 10 >> x
-SET y        // Defaults to 0
-
-// Math operations
-MATH x + 20 >> result
-MATH result sqrt >> root
-
-// Control flow
-IF x > 5 >> do_something
-JUMP end
-
-POINT do_something
-PRINT "x is greater than 5"
-
-POINT end
-END
-```
-
-### Working with Lists
-
-```cakespark
-// Create and populate a list
-LIST_CREATE numbers
-LIST_PUSH 30 >> numbers
-LIST_PUSH 10 >> numbers
-LIST_PUSH 20 >> numbers
-
-// Sort and access
-LIST_SORT numbers min  // Sort ascending
-LIST_GET numbers 0 >> smallest
-PRINT smallest  // outputs: 10
-```
-
-### Procedures
-
-```cakespark
-PROC factorial (n) {
-   IF n <= 1 >> base_case
-   MATH n - 1 >> n_minus_1
-   CALL factorial (n_minus_1) >> result
-   MATH n * result >> final
-   RETURN final
-   
-   POINT base_case
-   RETURN 1
-}
-
-CALL factorial (5) >> result
-PRINT result  // outputs: 120
-```
-
-## Core OpCodes
-
-| OpCode | Description | Example |
-|--------|-------------|---------|
-| `SET` | Assign variable | `SET 10 >> x` or `SET x` |
-| `MATH` | Math operations | `MATH x + y >> result` |
-| `PRINT` | Output values | `PRINT result` or `PRINT "Hello"` |
-| `IF` | Conditional jump | `IF x > 10 >> label` |
-| `JUMP` | Unconditional jump | `JUMP start` |
-| `POINT` | Define jump target | `POINT start` |
-| `PROC` | Define procedure | `PROC add (a, b) { ... }` |
-| `CALL` | Call procedure | `CALL add (1, 2) >> sum` |
-| `LIST_*` | List operations | `LIST_PUSH 10 >> mylist` |
-
-## Creating Custom OpCodes
-
-Extend CakeSpark with your own operations:
-
-```typescript
-// mymodule.ts
-import { CakeSparkVM } from 'cakespark';
-
-export function registerWith(vm: CakeSparkVM): void {
-  vm.registerOpCode("DOUBLE", (args, context) => {
-    const inputVar = context.getVar(args[0], 0);
-    if (inputVar.type === CakeSparkType.Number) {
-      const doubled = Num(inputVar.value * 2);
-      context.setVar(args[2], doubled);
-    }
-  });
-}
-```
-
-Use in CakeSpark:
-```cakespark
-IMPORT "mymodule"
-SET 5 >> x
-DOUBLE x >> result
-PRINT result  // outputs: 10
-```
-
-## License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Inspired by the Sparc asm, BASIC and esoteric languages
-- Built with TypeScript to save the people working on it from insanity
-- Designed for educational purposes and embedded scripting scenarios
+**Author:** Matas Petraitis (Verpitek MB)  
+**License:** Prosperity Public License 3.0.0
 
 ---
 
-<p align="center">Made with insanity and sillyness by Verpitek</p>
+## Quick Start
+
+```bash
+nimble build          # compile the VM
+./cakespark           # start REPL
+./cakespark hello.cake  # run a script
+```
+
+---
+
+## The One Rule
+
+Every line follows a single pattern:
+
+```
+function [arguments...] [>> destination]
+```
+
+The function receives arguments. If `>>` is present, the return value is stored in the destination. No expressions, no operator precedence, no nested calls.
+
+```
+set 10 >> x
+add x 5 >> result
+log "the answer is {result}"
+player.heal(50)
+rng 1 100 >> roll
+```
+
+---
+
+## What CakeSpark Is Not
+
+No classes, no closures, no modules, no async, no exceptions, no generics, no operator overloading, no macros, no file I/O, no threading, no standard library. If you need any of the above, use a different language.
+
+---
+
+## Examples
+
+### Hello World
+```
+set "world" >> name
+log "hello {name}"
+```
+
+### Fibonacci
+```
+set 0 >> a
+set 1 >> b
+set 0 >> i
+while i < 8
+  set a >> tmp
+  set b >> a
+  add tmp b >> b
+  add i 1 >> i
+  log "{b}"
+end
+```
+
+### Named Blocks
+```
+block patrol
+  log "patrol step {counter}"
+  add counter 1 >> counter
+end
+
+loop 3
+  run patrol
+end
+```
+
+---
+
+## Built-in Functions
+
+### Arithmetic
+`add`, `sub`, `mul`, `div`, `mod`, `pow`, `sqrt`, `abs`, `min`, `max`, `rng`
+
+### Bitwise
+`and`, `or`, `xor`, `not`, `shl`, `shr`
+
+### Output
+`log`, `halt`
+
+### String Operations
+`str.len`, `str.get`, `str.cat`, `str.slice`, `str.find`, `str.upper`, `str.lower`, `str.split`, `str.trim`, `str.join`
+
+### Array Operations
+`arr.new`, `arr.len`, `arr.get`, `arr.set`, `arr.push`, `arr.pop`, `arr.sort`, `arr.contains`
+
+### Type Operations
+`typeof`, `tostr`, `toint`, `tofloat`
+
+---
+
+## Control Flow
+
+### Conditionals
+```
+if hp < 20
+  player.heal(50)
+elif hp > 80
+  log "doing fine"
+else
+  log "meh"
+end
+```
+
+### Loops
+```
+while i < 10       // condition-based
+  add i 1 >> i
+end
+
+loop 5             // counted
+  player.step()
+end
+
+each items >> item // iteration
+  log "{item}"
+end
+```
+
+### break / continue
+Works inside `while`, `loop`, `each`.
+
+---
+
+## Blocks
+
+Named reusable code chunks. Share the caller's scope — set inputs before `run`, read outputs after.
+
+```
+block apply_damage
+  player.health >> hp
+  sub hp damage >> hp
+  set hp >> player.health
+end
+
+set 5 >> damage
+run apply_damage
+```
+
+Blocks support forward references via two-pass compilation.
+
+---
+
+## Peripherals
+
+The host exposes capabilities through namespaced peripherals with properties and methods:
+
+```
+player.health >> hp          // property read
+set 100 >> player.health     // property write
+player.heal(50)              // method call
+player.getHealth() >> hp     // method call with capture
+```
+
+---
+
+## Embedding (C API)
+
+```c
+#include "cakespark.h"
+
+CakeVM* vm = cake_new((CakeLimits){0});
+cake_compile(vm, "set 10 >> x\nlog \"hello {x}\"");
+while (cake_tick(vm) == CAKE_RUNNING) {}
+printf("%s\n", cake_get_output(vm));
+cake_free(vm);
+```
+
+See `include/cakespark.h` for the full API: compile, tick, register functions/peripherals, get/set variables, save/load state.
+
+---
+
+## Execution Model
+
+Tick-based — one line per `cake_tick()`. The host never loses control. Scripts cannot block or run away. Resource limits enforce hard budgets on variables, memory, call depth, iterations, and total ticks.
+
+---
+
+## Build & Test
+
+```bash
+nimble build        # compile VM
+nimble test         # run all 173 tests
+nimble test_vm      # run VM tests only
+```
+
+Implemented in Nim (≥ 2.0.0). Compiles to C — embeddable in any C/C++ application. No GC pressure on the host (ARC/ORC).
+
+---
+
+## License
+
+[Prosperity Public License 3.0.0](LICENSE.md) — free for non-commercial use, 30-day commercial trial, paid license for ongoing commercial use.

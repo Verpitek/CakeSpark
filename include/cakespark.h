@@ -1,0 +1,54 @@
+#ifndef CAKESPARK_H
+#define CAKESPARK_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define CAKE_OK       0
+#define CAKE_RUNNING  1
+#define CAKE_ERROR   -1
+
+typedef struct CakeVM     CakeVM;
+typedef void*             CakeValue;
+typedef void*             CakePeripheral;
+
+typedef struct {
+  int maxCallDepth;
+  int maxIterations;
+  int maxTicks;
+  int maxVariables;
+  int maxMemory;
+} CakeLimits;
+
+typedef CakeValue (*CakeFn)(CakeVM* vm, int argc, CakeValue* argv);
+
+typedef struct {
+  int hasSetter;
+  CakeValue (*getter)(CakeVM* vm);
+  void      (*setter)(CakeVM* vm, CakeValue val);
+} CakePeripheralProperty;
+
+const char* cake_version(void);
+
+CakeVM*  cake_new(CakeLimits limits);
+void     cake_free(CakeVM* vm);
+
+int      cake_compile(CakeVM* vm, const char* source);
+int      cake_tick(CakeVM* vm);
+int      cake_run(CakeVM* vm);
+
+void     cake_register_fn(CakeVM* vm, const char* name, CakeFn handler);
+void     cake_register_peripheral(CakeVM* vm, const char* name, CakePeripheral* p);
+
+CakeValue cake_get_var(CakeVM* vm, const char* name);
+void      cake_set_var(CakeVM* vm, const char* name, CakeValue val);
+
+const char* cake_get_output(CakeVM* vm);
+const char* cake_get_error(CakeVM* vm);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CAKESPARK_H */
