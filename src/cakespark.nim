@@ -48,7 +48,18 @@ when isMainModule:
       quit(1)
 
   proc repl() =
-    echo "CakeSpark 1.0.0 - type .quit or .exit to leave"
+    var version = "CakeSpark 1.0.0"
+    when defined(cakesparkDirect):
+      version.add(" [direct")
+    else:
+      version.add(" [")
+    when CakesparkIntBits == 32: version.add(" i32")
+    else: version.add(" i64")
+    when CakesparkNoFloat: version.add(" nofloat")
+    elif CakesparkFloatBits == 32: version.add(" f32")
+    else: version.add(" f64")
+    version.add(" ]")
+    echo version & " - type .quit or .exit to leave"
     var vm = newVM(compileSource(""))
     var buffer = ""
     var continuation = false

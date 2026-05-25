@@ -32,5 +32,37 @@ task test_compiler, "Run compiler tests":
 task test_vm, "Run VM tests":
   exec "nim c --path:src -r tests/test_vm.nim"
 
+task test_sizes, "Run byte-size target tests (i32)":
+  exec "nim c -d:cakesparkIntBits=32 --path:src -r tests/test_sizes.nim"
+
+task test_sizes_i64, "Run byte-size target tests (i64)":
+  exec "nim c -d:cakesparkIntBits=64 --path:src -r tests/test_sizes.nim"
+
+task test_sizes_nofloat, "Run byte-size target tests (no float)":
+  exec "nim c -d:cakesparkNoFloat --path:src -r tests/test_sizes.nim"
+
+task test_direct, "Run direct mode tests (i64)":
+  exec "nim c -d:cakesparkDirect --path:src -r tests/test_direct.nim"
+
+task test_direct_i32, "Run direct mode tests (i32)":
+  exec "nim c -d:cakesparkDirect -d:cakesparkIntBits=32 --path:src -r tests/test_direct.nim"
+
+task test_all, "Run full test matrix":
+  exec "nim c --path:src -r tests/test_lexer.nim"
+  exec "nim c --path:src -r tests/test_parser.nim"
+  exec "nim c --path:src -r tests/test_compiler.nim"
+  exec "nim c --path:src -r tests/test_vm.nim"
+  exec "nim c --path:src -r tests/test_functions.nim"
+  exec "nim c --path:src -r tests/test_controlflow.nim"
+  exec "nim c --path:src -r tests/test_strings.nim"
+  exec "nim c --path:src -r tests/test_arrays.nim"
+  exec "nim c --path:src -r tests/test_execution.nim"
+  exec "nim c --path:src -r tests/test_peripheral.nim"
+  exec "nim c --path:src -r tests/test_integration.nim"
+  exec "nim c -d:cakesparkIntBits=32 --path:src -r tests/test_sizes.nim"
+  exec "nim c -d:cakesparkNoFloat --path:src -r tests/test_sizes.nim"
+  exec "nim c -d:cakesparkDirect --path:src -r tests/test_direct.nim"
+  exec "nim c -d:cakesparkDirect -d:cakesparkIntBits=32 --path:src -r tests/test_direct.nim"
+
 task header, "Generate C header":
   exec "echo '#include/cakespark.h is hand-maintained; see include/cakespark.h'"

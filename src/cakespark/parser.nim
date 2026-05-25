@@ -1,4 +1,5 @@
 import cakespark/lexer
+import cakespark/value
 
 type
   ArgKind* = enum
@@ -14,9 +15,10 @@ type
     line*, col*: int
     case kind*: ArgKind
     of akInt:
-      intVal*: int64
+      intVal*: IntType
     of akFloat:
-      floatVal*: float64
+      when not CakesparkNoFloat:
+        floatVal*: FloatType
     of akString:
       strParts*: seq[StringPart]
     of akIdent:
@@ -141,7 +143,10 @@ proc parseArg*(p: var Parser): Arg =
     return Arg(kind: akInt, line: tok.line, col: tok.col, intVal: tok.intVal)
   of tkFloat:
     p.advance()
-    return Arg(kind: akFloat, line: tok.line, col: tok.col, floatVal: tok.floatVal)
+    when not CakesparkNoFloat:
+      return Arg(kind: akFloat, line: tok.line, col: tok.col, floatVal: tok.floatVal)
+    else:
+      return Arg(kind: akInt, line: tok.line, col: tok.col, intVal: 0)
   of tkString:
     p.advance()
     return Arg(kind: akString, line: tok.line, col: tok.col, strParts: tok.strParts)
@@ -189,7 +194,9 @@ proc parseCallArgs*(p: var Parser): seq[Arg] =
 proc parseConditionArg*(p: var Parser): Arg =
   let tok = p.peek()
   case tok.typ
-  of tkInt, tkFloat, tkString, tkIdent, tkKwTrue, tkKwFalse, tkLBracket:
+  of tkFloat:
+    return p.parseArg()
+  of tkInt, tkString, tkIdent, tkKwTrue, tkKwFalse, tkLBracket:
     return p.parseArg()
   else:
     p.setError("expected value in condition, got " & $tok.typ, tok.line, tok.col)

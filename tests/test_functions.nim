@@ -129,18 +129,7 @@ suite "functions - arithmetic":
     let vm = runSource("min 3 2.5 >> x\n")
     check abs(getVarFloat(vm, "x") - 2.5) < 0.01
 
-  test "rng in range":
-    let vm = runSource("rng 1 10 >> x\n")
-    let v = getVarInt(vm, "x")
-    check v >= 1 and v <= 10
 
-  test "rng min equals max":
-    let vm = runSource("rng 5 5 >> x\n")
-    check getVarInt(vm, "x") == 5
-
-  test "rng min gt max error":
-    let vm = runSource("rng 10 1 >> x\n")
-    check isErrVal(vm, "x")
 
 
 suite "functions - bitwise":
@@ -240,9 +229,10 @@ suite "functions - error propagation":
 
 suite "functions - edge cases":
 
-  test "add int overflow wraps":
+  test "add int overflow is error":
     let vm = runSource("add 9223372036854775807 1 >> x\n")
-    check getVarInt(vm, "x") == -9223372036854775808
+    check isErrVal(vm, "x")
+    check errMsg(vm, "x").contains("overflow")
 
   test "pow zero exponent":
     let vm = runSource("pow 5 0 >> x\n")

@@ -1,4 +1,7 @@
-import std/[tables, strutils, math]
+import std/[tables, strutils]
+import cakespark/value
+when not CakesparkNoFloat:
+  import std/math
 
 type
   TokenType* = enum
@@ -47,8 +50,9 @@ type
     typ*: TokenType
     lexeme*: string
     line*, col*: int
-    intVal*: int64
-    floatVal*: float64
+    intVal*: IntType
+    when not CakesparkNoFloat:
+      floatVal*: FloatType
     strParts*: seq[StringPart]
 
   Lexer* = object
@@ -128,46 +132,53 @@ proc readNumber(l: var Lexer): Token =
   while l.peek() != '\0' and isDigit(l.peek()):
     buf.add(l.peek())
     l.advance()
-  if l.peek() == '.':
-    if isDigit(l.peekAhead(1)):
-      buf.add(l.peek())
-      l.advance()
-      while l.peek() != '\0' and isDigit(l.peek()):
+  when not CakesparkNoFloat:
+    if l.peek() == '.':
+      if isDigit(l.peekAhead(1)):
         buf.add(l.peek())
         l.advance()
-      var fval: float64
-      try:
-        fval = parseFloat(buf)
-      except ValueError:
-        l.setError("invalid float literal: " & buf)
+        while l.peek() != '\0' and isDigit(l.peek()):
+          buf.add(l.peek())
+          l.advance()
+        var fval: float64
+        try:
+          fval = parseFloat(buf)
+        except ValueError:
+          l.setError("invalid float literal: " & buf)
+          return Token(typ: tkEof, line: l.line, col: startCol)
+        if classify(fval) == fcInf or classify(fval) == fcNegInf:
+          l.setError("float literal out of range: " & buf)
+          return Token(typ: tkEof, line: l.line, col: startCol)
+        return Token(
+          typ: tkFloat,
+          lexeme: buf,
+          line: l.line,
+          col: startCol,
+          floatVal: FloatType(fval),
+        )
+      else:
+        l.setError("trailing decimal point: " & buf & ".")
         return Token(typ: tkEof, line: l.line, col: startCol)
-      if classify(fval) == fcInf or classify(fval) == fcNegInf:
-        l.setError("float literal out of range: " & buf)
-        return Token(typ: tkEof, line: l.line, col: startCol)
-      return Token(
-        typ: tkFloat,
-        lexeme: buf,
-        line: l.line,
-        col: startCol,
-        floatVal: fval,
-      )
-    else:
-      l.setError("trailing decimal point: " & buf & ".")
-      return Token(typ: tkEof, line: l.line, col: startCol)
   else:
-    var ival: int64
-    try:
-      ival = parseBiggestInt(buf)
-    except ValueError:
-      l.setError("integer literal out of range: " & buf)
+    if l.peek() == '.' and isDigit(l.peekAhead(1)):
+      l.setError("float literals are not allowed (compiled with -d:cakesparkNoFloat)")
       return Token(typ: tkEof, line: l.line, col: startCol)
-    return Token(
-      typ: tkInt,
-      lexeme: buf,
-      line: l.line,
-      col: startCol,
-      intVal: ival,
-    )
+  var ival: int64
+  try:
+    ival = parseBiggestInt(buf)
+  except ValueError:
+    l.setError("integer literal out of range: " & buf)
+    return Token(typ: tkEof, line: l.line, col: startCol)
+  if ival < int64(IntMin) or ival > int64(IntMax):
+    l.setError("integer literal out of range for target: " & buf)
+    return Token(typ: tkEof, line: l.line, col: startCol)
+  return Token(
+    typ: tkInt,
+    lexeme: buf,
+    line: l.line,
+    col: startCol,
+    intVal: IntType(ival),
+  )
 
 proc processEscapes(lit: string): string =
   result = ""

@@ -1,5 +1,6 @@
 import unittest
 import strutils
+import cakespark/value
 import cakespark/lexer
 
 suite "lexer - identifiers and keywords":
@@ -89,26 +90,30 @@ suite "lexer - integer literals":
     check tokens3[0].intVal == -7
 
   test "boundary max int64":
-    let tokens = tokenize("9223372036854775807")
-    check tokens[0].typ == tkInt
-    check tokens[0].intVal == 9223372036854775807'i64
+    when CakesparkIntBits == 64:
+      let tokens = tokenize("9223372036854775807")
+      check tokens[0].typ == tkInt
+      check tokens[0].intVal == 9223372036854775807'i64
 
   test "boundary min int64":
-    let tokens = tokenize("-9223372036854775808")
-    check tokens[0].typ == tkInt
-    check tokens[0].intVal == -9223372036854775808'i64
+    when CakesparkIntBits == 64:
+      let tokens = tokenize("-9223372036854775808")
+      check tokens[0].typ == tkInt
+      check tokens[0].intVal == -9223372036854775808'i64
 
   test "overflow positive":
-    var lex = newLexer("9223372036854775808")
-    discard lex.nextToken()
-    check lex.hasError
-    check lex.errorMsg.contains("out of range")
+    when CakesparkIntBits == 64:
+      var lex = newLexer("9223372036854775808")
+      discard lex.nextToken()
+      check lex.hasError
+      check lex.errorMsg.contains("out of range")
 
   test "overflow negative":
-    var lex = newLexer("-9223372036854775809")
-    discard lex.nextToken()
-    check lex.hasError
-    check lex.errorMsg.contains("out of range")
+    when CakesparkIntBits == 64:
+      var lex = newLexer("-9223372036854775809")
+      discard lex.nextToken()
+      check lex.hasError
+      check lex.errorMsg.contains("out of range")
 
 
 suite "lexer - float literals":

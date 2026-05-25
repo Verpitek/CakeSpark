@@ -47,6 +47,9 @@ void      cake_set_var(CakeVM* vm, const char* name, CakeValue val);
 const char* cake_get_output(CakeVM* vm);
 const char* cake_get_error(CakeVM* vm);
 
+const char* cake_save_state(CakeVM* vm);
+int         cake_load_state(CakeVM* vm, const char* json);
+
 #ifdef __cplusplus
 }
 #endif

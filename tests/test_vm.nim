@@ -170,4 +170,7 @@ suite "VM - typeof":
 
   test "typeof int":
     let vm = runSource("typeof 42 >> t\n")
-    check getVarStr(vm, "t") == "int"
+    when CakesparkIntBits == 32:
+      check getVarStr(vm, "t") == "i32"
+    else:
+      check getVarStr(vm, "t") == "int"

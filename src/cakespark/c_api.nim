@@ -3,6 +3,7 @@ import cakespark/cakespark
 type
   CakeVMObj = object
     vm: VM
+    savedState: string
 
   CakeVM* = ptr CakeVMObj
 
@@ -32,11 +33,16 @@ proc cake_version*(): cstring {.exportc, dynlib, cdecl.} =
 proc cake_new*(limits: CakeLimits): CakeVM {.exportc, dynlib, cdecl.} =
   result = cast[CakeVM](alloc0(sizeof(CakeVMObj)))
   result.vm = newVM(compileSource(""))
-  result.vm.maxCallDepth = int(limits.maxCallDepth)
-  result.vm.maxIterations = int(limits.maxIterations)
-  result.vm.maxTicks = int(limits.maxTicks)
-  result.vm.maxVariables = int(limits.maxVariables)
-  result.vm.maxMemory = int(limits.maxMemory)
+  when defined(cakesparkDirect):
+    result.vm.maxCallDepth = 0
+    result.vm.maxIterations = 0
+    result.vm.maxTicks = 0
+  else:
+    result.vm.maxCallDepth = int(limits.maxCallDepth)
+    result.vm.maxIterations = int(limits.maxIterations)
+    result.vm.maxTicks = int(limits.maxTicks)
+    result.vm.maxVariables = int(limits.maxVariables)
+    result.vm.maxMemory = int(limits.maxMemory)
 
 proc cake_free*(cv: CakeVM) {.exportc, dynlib, cdecl.} =
   dealloc(cast[pointer](cv))
@@ -77,3 +83,10 @@ proc cake_get_output*(cv: CakeVM): cstring {.exportc, dynlib, cdecl.} =
 
 proc cake_get_error*(cv: CakeVM): cstring {.exportc, dynlib, cdecl.} =
   cv.vm.error.cstring
+
+proc cake_save_state*(cv: CakeVM): cstring {.exportc, dynlib, cdecl.} =
+  cv.savedState = saveState(cv.vm)
+  cv.savedState.cstring
+
+proc cake_load_state*(cv: CakeVM, json: cstring): int32 {.exportc, dynlib, cdecl.} =
+  if loadState(cv.vm, $json): 0 else: -1

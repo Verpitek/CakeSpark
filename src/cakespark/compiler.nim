@@ -1,5 +1,6 @@
 import cakespark/lexer
 import cakespark/parser
+import cakespark/value
 import std/tables
 
 type
@@ -15,9 +16,10 @@ type
   ResolvedArg* = object
     case kind*: ResolvedArgKind
     of rakInt:
-      intVal*: int64
+      intVal*: IntType
     of rakFloat:
-      floatVal*: float64
+      when not CakesparkNoFloat:
+        floatVal*: FloatType
     of rakString:
       strParts*: seq[StringPart]
     of rakIdent:
@@ -65,7 +67,7 @@ type
     loopEndIp*: int
 
     countName*: string
-    countVal*: int64
+    countVal*: IntType
 
     arrayName*: string
     arrayLit*: seq[ResolvedArg]
@@ -103,7 +105,10 @@ proc resolveArg(arg: Arg): ResolvedArg =
   of akInt:
     ResolvedArg(kind: rakInt, intVal: arg.intVal)
   of akFloat:
-    ResolvedArg(kind: rakFloat, floatVal: arg.floatVal)
+    when not CakesparkNoFloat:
+      ResolvedArg(kind: rakFloat, floatVal: arg.floatVal)
+    else:
+      ResolvedArg(kind: rakInt, intVal: 0)
   of akString:
     ResolvedArg(kind: rakString, strParts: arg.strParts)
   of akIdent:
@@ -263,6 +268,11 @@ proc compileEach(node: AstNode, c: var Compiler) =
   c.loopCount.dec
 
 proc compileFuncall(node: AstNode, c: var Compiler) =
+  when CakesparkNoFloat:
+    if node.funcName in ["tofloat", "sqrt", "pow"]:
+      c.setError("float functions are not available (compiled with -d:cakesparkNoFloat)", node.line, node.col)
+      return
+
   var args: seq[ResolvedArg]
   for a in node.args:
     args.add(resolveArg(a))

@@ -1,5 +1,30 @@
 import std/strutils
 
+const
+  CakesparkIntBits* {.intdefine.}: int = 64
+  CakesparkFloatBits* {.intdefine.}: int = 64
+  CakesparkNoFloat* {.booldefine.}: bool = false
+
+when CakesparkIntBits == 32:
+  type IntType* = int32
+elif CakesparkIntBits == 64:
+  type IntType* = int64
+else:
+  {.error: "cakesparkIntBits must be 32 or 64".}
+
+when CakesparkNoFloat:
+  discard
+elif CakesparkFloatBits == 32:
+  type FloatType* = float32
+elif CakesparkFloatBits == 64:
+  type FloatType* = float64
+else:
+  {.error: "cakesparkFloatBits must be 32 or 64".}
+
+const
+  IntMin* = low(IntType)
+  IntMax* = high(IntType)
+
 type
   ValueKind* = enum
     vkInt
@@ -19,9 +44,10 @@ type
   ValueObj* = object
     case kind*: ValueKind
     of vkInt:
-      intVal*: int64
+      intVal*: IntType
     of vkFloat:
-      floatVal*: float64
+      when not CakesparkNoFloat:
+        floatVal*: FloatType
     of vkStr:
       strVal*: string
     of vkArr:
@@ -32,11 +58,12 @@ type
 
   Value* = ref ValueObj
 
-proc newInt*(v: int64): Value =
+proc newInt*(v: IntType): Value =
   Value(kind: vkInt, intVal: v)
 
-proc newFloat*(v: float64): Value =
-  Value(kind: vkFloat, floatVal: v)
+when not CakesparkNoFloat:
+  proc newFloat*(v: FloatType): Value =
+    Value(kind: vkFloat, floatVal: v)
 
 proc newStr*(v: string): Value =
   Value(kind: vkStr, strVal: v)
@@ -59,7 +86,8 @@ proc clone*(v: Value): Value =
   of vkInt:
     result = Value(kind: vkInt, intVal: v.intVal)
   of vkFloat:
-    result = Value(kind: vkFloat, floatVal: v.floatVal)
+    when not CakesparkNoFloat:
+      result = Value(kind: vkFloat, floatVal: v.floatVal)
   of vkStr:
     result = Value(kind: vkStr, strVal: v.strVal)
   of vkArr:
@@ -73,7 +101,11 @@ proc clone*(v: Value): Value =
 proc `$`*(v: Value): string =
   case v.kind
   of vkInt: $v.intVal
-  of vkFloat: $v.floatVal
+  of vkFloat:
+    when not CakesparkNoFloat:
+      $v.floatVal
+    else:
+      "0.0"
   of vkStr: "\"" & v.strVal & "\""
   of vkArr:
     var parts: seq[string]
@@ -84,8 +116,43 @@ proc `$`*(v: Value): string =
 
 proc typeName*(v: Value): string =
   case v.kind
-  of vkInt: "int"
-  of vkFloat: "float"
+  of vkInt:
+    when CakesparkIntBits == 32: "i32"
+    else: "int"
+  of vkFloat:
+    when not CakesparkNoFloat:
+      when CakesparkFloatBits == 32: "f32"
+      else: "float"
+    else:
+      "float"
   of vkStr: "str"
   of vkArr: "arr"
   of vkErr: "err"
+
+proc checkAdd*(a, b: IntType): (IntType, bool) =
+  if b > 0 and a > IntMax - b: return (0.IntType, true)
+  if b < 0 and a < IntMin - b: return (0.IntType, true)
+  return (a + b, false)
+
+proc checkSub*(a, b: IntType): (IntType, bool) =
+  if b < 0 and a > IntMax + b: return (0.IntType, true)
+  if b > 0 and a < IntMin + b: return (0.IntType, true)
+  return (a - b, false)
+
+proc checkMul*(a, b: IntType): (IntType, bool) =
+  if a == 0 or b == 0: return (0, false)
+  if a == IntMin and b == -1: return (0, true)
+  {.push overflowChecks: off.}
+  let product = a * b
+  if product div a != b: return (0, true)
+  {.pop.}
+  return (product, false)
+
+proc checkDiv*(a, b: IntType): (IntType, bool) =
+  if b == 0: return (0, true)
+  if a == IntMin and b == -1: return (0, true)
+  return (a div b, false)
+
+proc checkNeg*(a: IntType): (IntType, bool) =
+  if a == IntMin: return (0, true)
+  return (-a, false)

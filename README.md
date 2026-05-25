@@ -32,7 +32,7 @@ set 10 >> x
 add x 5 >> result
 log "the answer is {result}"
 player.heal(50)
-rng 1 100 >> roll
+tostr x >> s
 ```
 
 ---
@@ -82,7 +82,7 @@ end
 ## Built-in Functions
 
 ### Arithmetic
-`add`, `sub`, `mul`, `div`, `mod`, `pow`, `sqrt`, `abs`, `min`, `max`, `rng`
+`add`, `sub`, `mul`, `div`, `mod`, `pow`, `sqrt`, `abs`, `min`, `max`
 
 ### Bitwise
 `and`, `or`, `xor`, `not`, `shl`, `shr`
